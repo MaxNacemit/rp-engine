@@ -1,4 +1,5 @@
 import mysql.connector
+import hashlib
 
 
 class database():
@@ -8,7 +9,7 @@ class database():
 		self.cursor = mysql.connector.connect(host="localhost", user=login, password=password, database="database").cursor()
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, descripion_file VARCHAR(100), school VARCHAR(8))')
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT FOREIGN KEY REFERENCES spells(id), dependence VARCHAR(3))') #dependence is mul(*), div, msq(*x^2), dsq or exp
-		self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCRMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(128))') #пароли должны хешироваться SHA-512
+		self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCRMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(128), status INT)') #пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), danger_class INT, description_file VARCHAR(50))')
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spells_knowledge(user_id INT FOREIGN KEY REFERENCES users(id), spell_id INT FOREIGN KEY REFERENCES spells(id))')
 	
@@ -39,5 +40,19 @@ class database():
 		spells = public_spells + priv_ids
 		return spells
 		
-		
+	def register_user(self, name, password, character_data=[3, "none", "biography"]):
+		request = 'INSERT INTO users (name, pass_hash, learning_const, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, 1)'
+		pass_hash = hashlib.sha512().update(password.encode("utf-8"))
+		password = pass_hash.hexdigest()
+		self.cursor.execute(request, (name, password, character_data[0], character_data[1], character_data[2]))
+		self.cursor.commit()
 
+	def modify_user(self, user_id, status):
+		request = 'UPDATE users SET status = %s WHERE id = %s'
+		self.cursor.execute(request, (user_id, status))
+	
+	
+	
+	
+		
+		
