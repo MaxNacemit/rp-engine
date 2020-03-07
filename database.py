@@ -8,7 +8,7 @@ class database():
 		self.cursor = self.con.cursor()
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, descripion_file VARCHAR(100), school VARCHAR(8))')
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT FOREIGN KEY REFERENCES spells(id), dependence VARCHAR(3))') #dependence is mul(*), div, msq(*x^2), dsq or exp
-		self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCRMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(128), status INT)') #пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
+		self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCRMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(128), status INT, max_mana INT)') #пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, 0 - непринятая анкета, -1 - Banned
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), danger_class INT, description_file VARCHAR(50))')
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spells_knowledge(user_id INT FOREIGN KEY REFERENCES users(id), spell_id INT FOREIGN KEY REFERENCES spells(id))')
 		self.pending_con = mysql.connector.connect(host = "localhost", user = "pending", password = "password", database = "pending")
@@ -30,7 +30,7 @@ class database():
 		user_req = 'SELECT * FROM users WHERE id = %s'
 		val = (user_id, ) 
 		user = self.cursor.execute(user_req, val).fetchone()
-		result = {'id': user[0], 'name': user[1], 'learning_const': user[2], 'school': user[3], 'biography_file': user[4], 'pass_hash': user[5]}
+		result = {'id': user[0], 'name': user[1], 'learning_const': user[2], 'school': user[3], 'biography_file': user[4], 'pass_hash': user[5], 'status': user[6], 'mana_max': user[7]}
 		return result
 	
 	def get_user_spells(self, user_id):
@@ -43,8 +43,8 @@ class database():
 		spells = public_spells + priv_ids
 		return spells
 		
-	def register_user(self, name, password, character_data=[3, "none", "biography"]):
-		request = 'INSERT INTO users (name, pass_hash, learning_const, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, 1)'
+	def register_user(self, name, password, character_data=[0, 0, "none", "biography"]):
+		request = 'INSERT INTO users (name, pass_hash, learning_const, max_mana, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, %s, 0)'
 		pass_hash = hashlib.sha512().update(password.encode("utf-8"))
 		password = pass_hash.hexdigest()
 		self.cursor.execute(request, (name, password, character_data[0], character_data[1], character_data[2]))
