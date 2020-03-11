@@ -4,13 +4,13 @@ from passlib.hash import pbkdf2_sha512
 
 class Database:
     def __init__(self, login, password):
-        self.con = mysql.connector.connect(host="localhost", user=login, password=password, database="Database")
+        self.con = mysql.connector.connect(host="localhost", user=login, password=password, database="knowledge")
         self.cursor = self.con.cursor()
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, descripion_file VARCHAR(100), school VARCHAR(8), approved BOOLEAN)')
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT FOREIGN KEY REFERENCES spells(id), dependence VARCHAR(3))')
+        # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
         # dependence is mul(*), div, msq(*x^2), dsq or exp
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(130), status INT, max_mana INT)')
-        # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, 0 - непринятая анкета, -1 - Banned
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8))')
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT FOREIGN KEY REFERENCES spells(id), dependence VARCHAR(3))')
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(130), status INT)')
         self.cursor.execute('CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), danger_class INT, description_file VARCHAR(50))')
         self.cursor.execute('CREATE TABLE IF NOT EXISTS spells_knowledge(user_id INT FOREIGN KEY REFERENCES users(id), spell_id INT FOREIGN KEY REFERENCES spells(id))')
 
@@ -53,6 +53,10 @@ class Database:
         pass_hash = pbkdf2_sha512.hash(password)
         self.cursor.execute(request, (name, pass_hash, character_data[0], character_data[1], character_data[2]))
         self.cursor.commit()
+
+    def check_login(self, username, password):
+        pass_hash = pbkdf2_sha512.hash(password)
+        return self.cursor.execute('SELECT * FROM users WHERE name = %s AND pass_hash = %s', (username, pass_hash)).fetchone()
 
     def modify_user(self, user_id, status):
         request = 'UPDATE users SET status = %s WHERE id = %s'
