@@ -13,7 +13,7 @@ class database():
 		self.cursor.execute('CREATE TABLE IF NOT EXISTS spells_knowledge(user_id INT, spell_id INT, FOREIGN KEY (user_id) REFERENCES users (id), FOREIGN KEY(spell_id) REFERENCES spells (id))')
 	
 	def add_spell(self, spell_params, spell_variables): #Первое - кортеж (название, публичность, очевидность(=способность понять по описанию каста, что кастуется), требования по константе обученности, расход маны, адрес файла с описанием, школа)
-		insert_request = 'INSERT INTO spells (name, public, obvious, required_const, mana_cost, description_file, school) VALUES (%s, %s, %s, %s, %s, %s, %s)'
+		insert_request = 'INSERT INTO spells (name, public, obvious, required_const, mana_cost, description_file, school, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, false)'
 		self.cursor.execute(insert_request, spell_params)
 		self.cursor.commit()
 		spell_id = self.cursor.lastrowid
@@ -26,21 +26,21 @@ class database():
 		user_req = 'SELECT * FROM users WHERE id = %s'
 		val = (user_id, ) 
 		user = self.cursor.execute(user_req, val).fetchone()
-		result = {'id': user[0], 'name': user[1], 'learning_const': user[2], 'school': user[3], 'biography_file': user[4], 'pass_hash': user[5]}
+		result = {'id': user[0], 'name': user[1], 'learning_const': user[2], 'school': user[3], 'biography_file': user[4], 'pass_hash': user[5], 'status': user[6], 'mana_max': user[7]}
 		return result
 	
 	def get_user_spells(self, user_id):
 		user = self.get_user_dict(user_id)
 		pub_vals = (1, user['school'], user['learning_const'])
-		pub_req = 'SELECT id FROM spells WHERE public = %s AND school = %s AND required_const < %s'
+		pub_req = 'SELECT id FROM spells WHERE public = %s AND school = %s AND required_const < %s AND approved=true'
 		public_spells = self.cursor.execute(pub_req, pub_vals).fetchall()
 		priv_req = 'SELECT spell_id FROM spells_knowledge WHERE user_id = %s'
 		priv_ids = self.cursor.execute(priv_req, (user[id], )).fetchall()
 		spells = public_spells + priv_ids
 		return spells
 		
-	def register_user(self, name, password, character_data=[3, "none", "biography"]):
-		request = 'INSERT INTO users (name, pass_hash, learning_const, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, 1)'
+	def register_user(self, name, password, character_data=[0, 0, "none", "biography"]):
+		request = 'INSERT INTO users (name, pass_hash, learning_const, max_mana, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, %s, 0)'
 		pass_hash = hashlib.sha512().update(password.encode("utf-8"))
 		password = pass_hash.hexdigest()
 		self.cursor.execute(request, (name, password, character_data[0], character_data[1], character_data[2]))
@@ -49,6 +49,9 @@ class database():
 	def modify_user(self, user_id, status):
 		request = 'UPDATE users SET status = %s WHERE id = %s'
 		self.cursor.execute(request, (user_id, status))
+		
+	def approve_spell(self, spell_id):
+		self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id, ))
 	
 database = database('knowledge', 'LainisOmniscient')	
 	
