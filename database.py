@@ -1,6 +1,5 @@
-import hashlib
-
 import mysql.connector
+from passlib.hash import pbkdf2_sha512
 
 
 class Database:
@@ -10,7 +9,7 @@ class Database:
         self.cursor.execute('CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, descripion_file VARCHAR(100), school VARCHAR(8), approved BOOLEAN)')
         self.cursor.execute('CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT FOREIGN KEY REFERENCES spells(id), dependence VARCHAR(3))')
         # dependence is mul(*), div, msq(*x^2), dsq or exp
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(128), status INT, max_mana INT)')
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), pass_hash CHAR(130), status INT, max_mana INT)')
         # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, 0 - непринятая анкета, -1 - Banned
         self.cursor.execute('CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), danger_class INT, description_file VARCHAR(50))')
         self.cursor.execute('CREATE TABLE IF NOT EXISTS spells_knowledge(user_id INT FOREIGN KEY REFERENCES users(id), spell_id INT FOREIGN KEY REFERENCES spells(id))')
@@ -31,11 +30,6 @@ class Database:
             self.cursor.commit()
 
     def get_user_dict(self, user_id):
-        """
-
-        :param user_id: ID пользователя
-        :return: словарь данных пользователя
-        """
         user_req = 'SELECT * FROM users WHERE id = %s'
         user = self.cursor.execute(user_req, (user_id,)).fetchone()
         result = {'id': user[0], 'name': user[1], 'learning_const': user[2], 'school': user[3],
@@ -56,9 +50,8 @@ class Database:
         if character_data is None:
             character_data = [0, 0, "none", "biography"]
         request = 'INSERT INTO users (name, pass_hash, learning_const, max_mana, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, %s, 0)'
-        pass_hash = hashlib.sha512().update(password.encode("utf-8"))
-        password = pass_hash.hexdigest()
-        self.cursor.execute(request, (name, password, character_data[0], character_data[1], character_data[2]))
+        pass_hash = pbkdf2_sha512.hash(password)
+        self.cursor.execute(request, (name, pass_hash, character_data[0], character_data[1], character_data[2]))
         self.cursor.commit()
 
     def modify_user(self, user_id, status):

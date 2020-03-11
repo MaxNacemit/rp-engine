@@ -6,7 +6,6 @@ app = Flask(__name__)
 db = Database('root', 'strongsqlpassword')
 db.register_user('shar3nda', 'stronguserpassword')
 print(db.get_user_dict('shar3nda'))
-print('olololololololol')
 
 
 @app.route('/')
