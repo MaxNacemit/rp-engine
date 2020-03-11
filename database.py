@@ -53,7 +53,7 @@ class database():
 	def approve_spell(self, spell_id):
 		self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id, ))
 	
-database = database('knowledge', 'LainisOmniscient')	
+	
 	
 	
 		
