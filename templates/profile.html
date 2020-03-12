@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<h2>Профиль</h2>
+<div>
+    <p>Текущие детали профиля:</p>
+    <table>
+        <tr>
+            <td>Логин:</td>
+            <td>{{ account['login'] }}</td>
+        </tr>
+        <tr>
+            <td>Ник:</td>
+            <td>{{ account['nickname'] }}</td>
+        </tr>
+        <tr>
+            <td>Статус:</td>
+            <td>{{ account['status'] }}</td>
+        </tr>
+    </table>
+</div>
+{% endblock %}
