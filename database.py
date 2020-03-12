@@ -60,8 +60,10 @@ class Database:
         user_req = 'SELECT * FROM users WHERE login = %s'
         self.cursor.execute(user_req, (user_login,))
         user = self.cursor.fetchone()
-        result = dict(zip(USER_DICT_LABELS, user))
-        return result
+        if user is not None:
+            result = dict(zip(USER_DICT_LABELS, user))
+            return result
+        return None
 
     def get_user_spells(self, user_login):
         user = self.get_user_dict(user_login)
@@ -75,7 +77,8 @@ class Database:
 
     def check_login(self, username, password):
         user_data = self.get_user_dict(username)
-        return pbkdf2_sha512.verify(password, user_data['pass_hash'])
+        if user_data is not None:
+            return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
     def modify_user(self, user_id, status):
         request = 'UPDATE users SET status = %s WHERE id = %s'
