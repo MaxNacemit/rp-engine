@@ -86,4 +86,3 @@ class Database:
 
     def approve_spell(self, spell_id):
         self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id,))
->>>>>>> 3f8d7d92a8bb884d91254cceee861fdf17b4155f
