@@ -75,7 +75,6 @@ class Database:
 
     def check_login(self, username, password):
         user_data = self.get_user_dict(username)
-        print(user_data)
         return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
     def modify_user(self, user_id, status):
