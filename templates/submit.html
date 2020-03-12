@@ -1,8 +1,41 @@
-{% extends base.html %}
+<script>
+    import * as alphabet from '../files/alphabet.json';
 
-{% block body %}
+    function addParameter() {
+        let param_name = prompt("Что за параметр?", "Дальность");
+        let form = document.getElementById("inputs");
+        form.innerHTML = form.innerHTML + '<input type="text" name="' + transliterate(param_name) + '">'
+    }
+
+    function transliterate(word) {
+        let answer = '';
+        let a = alphabet;
+        for (let i in word) {
+            if (word.hasOwnProperty(i)) {
+                if (a[word[i]] === undefined) {
+                    answer += word[i];
+                } else {
+                    answer += a[word[i]];
+                }
+            }
+        }
+        return answer;
+    }
+</script>
 <form action="send_spell" method="post" name="submit_spell">
-	<div id="inputs">
-	Название заклинания:<input type="text" name="spell_title" size=50>
-	Базовый расход маны: <input type="number" name="spell_cost">
-	
+    <div id="inputs">
+        <h2>Добавить заклинание: </h2>
+        <p>Название заклинания: <input name="spell_title" size=50 type="text"></p>
+        <p>Базовый расход маны: <input name="spell_cost" type="number"></p>
+        <p>Требуемая константа обученности: <input name="learning_const" type="number"></p>
+        <p>Описание заклинания: <textarea cols="80" name="description" rows="6"></textarea></p>
+        <p>Очевидное (по касту понятно, что за заклинание): <input name="obvious" type="checkbox"></p>
+        <p>Публичное: <input checked name="public" type="checkbox"></p>
+        <p>Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная
+            пропорциональность, "квадрат" - пропорционально квадрату параметра, "обратный квадрат", "экспонента" -
+            базовый расход возводится в степень параметра.</p>
+
+        <button onClick="addParameter()">Добавить параметр</button>
+        <input name="submit" type="submit">
+    </div>
+</form>

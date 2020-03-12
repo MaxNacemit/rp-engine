@@ -104,6 +104,32 @@ def profile():
     return redirect(url_for('login'))
 
 
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if request.method == 'POST' and ('bio' in request.form or 'password' in request.form):
+        username = request.form['username']
+        password = request.form['password']
+        account = db.is_available(username)
+        if not account:
+            msg = 'Аккаунт уже зарегистрирован!'
+        elif not re.match(r'[A-Za-z0-9]+', username):
+            msg = 'В логине нельзя использовать спец. сиволы!'
+        elif len(password) < 8:
+            msg = 'Выберите пароль не менее 8 знаков!'
+        elif not username or not password:
+            msg = 'Заполните все поля!'
+        else:
+            db.register_user(username, password)
+            msg = 'Вы успешно зарегистрировались!'
+            session['loggedin'] = True
+            session['username'] = username
+            return redirect(url_for('home'))
+    elif request.method == 'POST':
+        msg = 'Введите логин и пароль!'
+
+    return render_template('register.html', msg=msg)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
 
