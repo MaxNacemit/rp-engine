@@ -1,3 +1,9 @@
+{% extends 'layout.html' %}
+
+{% block title %}Заклинания{% endblock %}
+{% block content %}
+<h2>Добавление заклинания</h2>
+
 <script>
     import * as alphabet from '../files/alphabet.json';
 
@@ -22,27 +28,34 @@
         return answer;
     }
 </script>
-<form action="send_spell" method="post" name="submit_spell">
+{% if msg %}
+<div class="msg">{{ msg }}</div>
+{% endif %}
+<form action="{{ url_for('submit') }}" method="post" name="submit_spell">
     <div id="inputs">
-        <h2>Добавить заклинание: </h2>
-        <p>Название заклинания: <label>
+        <p>Название заклинания:</p>
+        <label>
             <input name="spell_title" size=50 type="text">
-        </label></p>
-        <p>Базовый расход маны: <label>
-            <input name="spell_cost" type="number">
-        </label></p>
-        <p>Требуемая константа обученности: <label>
+        </label>
+        <p>Базовый расход маны:</p><label>
+        <input name="spell_cost" type="number">
+    </label>
+        <p>Требуемая константа обученности:</p>
+        <label>
             <input name="learning_const" type="number">
-        </label></p>
-        <p>Описание заклинания: <label>
+        </label>
+        <p>Описание заклинания:</p>
+        <label>
             <textarea cols="80" name="description" rows="6"></textarea>
-        </label></p>
-        <p>Очевидное (по касту понятно, что за заклинание): <label>
-            <input name="obvious" type="checkbox">
-        </label></p>
-        <p>Публичное: <label>
-            <input checked name="is_public" type="checkbox">
-        </label></p>
+        </label>
+        <p>Очевидное (по касту понятно, что за заклинание):
+            <label>
+                <input name="obvious" type="checkbox">
+            </label></p>
+        <p>Публичное:
+            <label>
+                <input checked name="is_public" type="checkbox">
+            </label></p>
         <p>Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная
             пропорциональность, "квадрат" - пропорционально квадрату параметра, "обратный квадрат", "экспонента" -
             базовый расход возводится в степень параметра.</p>
@@ -51,3 +64,4 @@
         <input name="submit" type="submit">
     </div>
 </form>
+{% endblock %}

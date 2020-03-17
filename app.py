@@ -5,12 +5,15 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
-SPELL_LABELS = ['spell_title', 'spell_cost', 'learning_const', 'description', 'obvious', 'is_public']
+REQ_SPELL_LABELS = {'spell_title', 'spell_cost', 'learning_const', 'description'}
 
 db = Database('ivan', 'strongsqlpassword')
 
 app = Flask(__name__)
 app.secret_key = 'very secret and reliable secret key'
+
+
+# TODO: add decorators to check login on user-only pages
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -70,6 +73,26 @@ def home():
     return redirect(url_for('login'))
 
 
+# TODO: add support for custom parameters
+# TODO: add spells to database
+@app.route('/submit', methods=['GET', 'POST'])
+def submit():
+    if 'loggedin' in session:
+        msg = ''
+        if request.method == 'POST':
+            request.form = {k: v for k, v in request.form.items() if v != '' and k != 'submit'}
+            spell_keys = set(request.form)
+            if REQ_SPELL_LABELS.issubset(spell_keys):
+                request.form = dict(request.form)
+                request.form['is_public'] = 1 if 'is_public' in spell_keys else 0
+                request.form['is_obvious'] = 1 if 'is_obvious' in spell_keys else 0
+                msg = 'Заклинание отправлено на модерацию!'
+            else:
+                msg = 'Заполните все параметры!'
+        return render_template('submit.html', msg=msg)
+    return redirect(url_for('login'))
+
+
 @app.route('/profile')
 def profile():
     if 'loggedin' in session:
@@ -79,6 +102,7 @@ def profile():
     return redirect(url_for('login'))
 
 
+# TODO: make a working edit_profile() function and .html file
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     return render_template('edit_profile.html')
