@@ -25,12 +25,24 @@
 <form action="send_spell" method="post" name="submit_spell">
     <div id="inputs">
         <h2>Добавить заклинание: </h2>
-        <p>Название заклинания: <input name="spell_title" size=50 type="text"></p>
-        <p>Базовый расход маны: <input name="spell_cost" type="number"></p>
-        <p>Требуемая константа обученности: <input name="learning_const" type="number"></p>
-        <p>Описание заклинания: <textarea cols="80" name="description" rows="6"></textarea></p>
-        <p>Очевидное (по касту понятно, что за заклинание): <input name="obvious" type="checkbox"></p>
-        <p>Публичное: <input checked name="public" type="checkbox"></p>
+        <p>Название заклинания: <label>
+            <input name="spell_title" size=50 type="text">
+        </label></p>
+        <p>Базовый расход маны: <label>
+            <input name="spell_cost" type="number">
+        </label></p>
+        <p>Требуемая константа обученности: <label>
+            <input name="learning_const" type="number">
+        </label></p>
+        <p>Описание заклинания: <label>
+            <textarea cols="80" name="description" rows="6"></textarea>
+        </label></p>
+        <p>Очевидное (по касту понятно, что за заклинание): <label>
+            <input name="obvious" type="checkbox">
+        </label></p>
+        <p>Публичное: <label>
+            <input checked name="is_public" type="checkbox">
+        </label></p>
         <p>Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная
             пропорциональность, "квадрат" - пропорционально квадрату параметра, "обратный квадрат", "экспонента" -
             базовый расход возводится в степень параметра.</p>
