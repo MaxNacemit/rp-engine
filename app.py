@@ -1,4 +1,3 @@
-import random
 import re
 
 from flask import Flask, render_template, request, redirect, url_for, session
@@ -6,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
+SPELL_LABELS = ['spell_title', 'spell_cost', 'learning_const', 'description', 'obvious', 'is_public']
 
 db = Database('ivan', 'strongsqlpassword')
 
@@ -66,7 +66,7 @@ def register():
 @app.route('/home')
 def home():
     if 'loggedin' in session:
-        return render_template('base.html')
+        return render_template('base.html', username=session['username'])
     return redirect(url_for('login'))
 
 
