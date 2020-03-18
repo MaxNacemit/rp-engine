@@ -1,46 +1,67 @@
-{% extends base.html %}
+{% extends 'layout.html' %}
 
-{% block body %}
+{% block title %}Заклинания{% endblock %}
+{% block content %}
+<h2>Добавление заклинания</h2>
+
 <script>
-	function addParameter() {
-		var param_name = prompt("Что за параметр?", "Дальность");
-		var form = document.getElementById("inputs");
-		form.innerHTML = form.innerHTML + '<input type="text" name="' + transliterate(param_name) + '">'}
-	
-	function transliterate(word){
-		var answer = ""
-		, a = {};
+    import * as alphabet from '../files/alphabet.json';
 
-	a["Ё"]="YO";a["Й"]="I";a["Ц"]="TS";a["У"]="U";a["К"]="K";a["Е"]="E";a["Н"]="N";a["Г"]="G";a["Ш"]="SH";a["Щ"]="SCH";a["З"]="Z";a["Х"]="H";a["Ъ"]="'";
-	a["ё"]="yo";a["й"]="i";a["ц"]="ts";a["у"]="u";a["к"]="k";a["е"]="e";a["н"]="n";a["г"]="g";a["ш"]="sh";a["щ"]="sch";a["з"]="z";a["х"]="h";a["ъ"]="'";
-	a["Ф"]="F";a["Ы"]="I";a["В"]="V";a["А"]="a";a["П"]="P";a["Р"]="R";a["О"]="O";a["Л"]="L";a["Д"]="D";a["Ж"]="ZH";a["Э"]="E";
-	a["ф"]="f";a["ы"]="i";a["в"]="v";a["а"]="a";a["п"]="p";a["р"]="r";a["о"]="o";a["л"]="l";a["д"]="d";a["ж"]="zh";a["э"]="e";
-	a["Я"]="Ya";a["Ч"]="CH";a["С"]="S";a["М"]="M";a["И"]="I";a["Т"]="T";a["Ь"]="'";a["Б"]="B";a["Ю"]="YU";
-	a["я"]="ya";a["ч"]="ch";a["с"]="s";a["м"]="m";a["и"]="i";a["т"]="t";a["ь"]="'";a["б"]="b";a["ю"]="yu";
+    function addParameter() {
+        let param_name = prompt("Что за параметр?", "Дальность");
+        let form = document.getElementById("inputs");
+        form.innerHTML = form.innerHTML + '<input type="text" name="' + transliterate(param_name) + '">'
+    }
 
-	for (i in word){
-		if (word.hasOwnProperty(i)) {
-			if (a[word[i]] === undefined){
-				answer += word[i];
-		} else {
-			answer += a[word[i]];
-       }
-     }
-   }
-   return answer;
-}
+    function transliterate(word) {
+        let answer = '';
+        let a = alphabet;
+        for (let i in word) {
+            if (word.hasOwnProperty(i)) {
+                if (a[word[i]] === undefined) {
+                    answer += word[i];
+                } else {
+                    answer += a[word[i]];
+                }
+            }
+        }
+        return answer;
+    }
 </script>
-<form action="send_spell" method="post" name="submit_spell">
-	<div id="inputs">
-	Название заклинания:<input type="text" name="spell_title" size=50>
-	Базовый расход маны: <input type="number" name="spell_cost">
-	Требуемая константа обученности: <input type="number" name="learning_const">
-	Описание заклинания: <textarea rows="6" cols="80" name="description"></textarea>
-	Очевидное(по касту понятно, что за заклинание): <input type="checkbox" name="obvious">
-	Публичное: <input type="checkbox" name="public" checked>
-	Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная пропорциональность, "квадрат" - пропорционально квадрату параметра,
-	"обратный квадрат", "экспонента" - базовый расход возводится в степень параметра. 
-	<button onClick="addParameter()">Добавить параметр</button>
-	<input type="submit" name="submit">
-	</div>
+{% if msg %}
+<div class="msg">{{ msg }}</div>
+{% endif %}
+<form action="{{ url_for('submit') }}" method="post" name="submit_spell">
+    <div id="inputs">
+        <p>Название заклинания:</p>
+        <label>
+            <input name="spell_title" size=50 type="text">
+        </label>
+        <p>Базовый расход маны:</p><label>
+        <input name="spell_cost" type="number">
+    </label>
+        <p>Требуемая константа обученности:</p>
+        <label>
+            <input name="learning_const" type="number">
+        </label>
+        <p>Описание заклинания:</p>
+        <label>
+            <textarea cols="80" name="description" rows="6"></textarea>
+        </label>
+        <p>Очевидное (по касту понятно, что за заклинание):
+            <label>
+                <input name="obvious" type="checkbox">
+            </label></p>
+        <p>Публичное:
+            <label>
+                <input checked name="is_public" type="checkbox">
+            </label></p>
+        <p>Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная
+            пропорциональность, "квадрат" - пропорционально квадрату параметра, "обратный квадрат", "экспонента" -
+            базовый расход возводится в степень параметра.</p>
+
+        <button onClick="addParameter()">Добавить параметр</button>
+        <input name="submit" type="submit">
+    </div>
 </form>
+{% endblock %}

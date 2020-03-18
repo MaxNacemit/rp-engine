@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="ru">
-	<head>
-		<meta charset="utf-8">
-		<title>Login</title>
-	</head>
-	<body>
-	{% block body %}
-	{% endblock %}
-	</body>
-</html>
+{% extends 'layout.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<h2>Главная</h2>
+
+<p>Добро пожаловать, {{ username }}!</p>
+{% endblock %}

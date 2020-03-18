@@ -12,7 +12,7 @@ class Database:
         # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
         # dependence is mul(*), div, msq(*x^2), dsq or exp
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), is_public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8))')
+            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), is_public BOOLEAN, is_obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8))')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT, FOREIGN KEY (spell) REFERENCES spells (id), dependence VARCHAR(3))')
         self.cursor.execute(
@@ -37,14 +37,19 @@ class Database:
             self.cursor.execute(req_request, (req_set[0], spell_id, req_set[1]))
             self.con.cursor.commit()
 
+    def is_available(self, login):
+        check = 'SELECT * FROM users WHERE login = %s'
+        self.cursor.execute(check, (login,))
+        if self.cursor.fetchone() is None:
+            return True
+        return False
+
     def register_user(self, login, password, char_data=None):
         if char_data is None:
-            char_data = [0, 0, "none_school", "biography"]
+            char_data = [0, 0, "none", "biography"]
 
         pass_hash = pbkdf2_sha512.hash(password)
-        check_available = 'SELECT * FROM users WHERE login = %s'
-        self.cursor.execute(check_available, (login,))
-        if self.cursor.fetchone() is None:
+        if self.is_available(login):
             request = 'INSERT INTO users (login, pass_hash, nickname, max_mana, learning_const, school, biography_file, status) VALUES (%s, %s, %s, %s, %s, %s, %s, 0)'
             self.cursor.execute(request, (login, pass_hash, login, *char_data))
             self.con.commit()

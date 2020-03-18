@@ -4,15 +4,15 @@
 {% if admin %}
 <h2> Ожидающие приема заклинания: </h2>
 <div class="spells-pending">
-	(% for spell in page %}
-		<div class="spell">
-			<h4>{{ spell.name }}</h4>
-			<a href={{ url_for('pending', filename=spell.id) }}>Просмотреть заклинание</a>
-		</div>
-	{% endfor %}
+    (% for spell in page %}
+    <div class="spell">
+        <h4>{{ spell.name }}</h4>
+        <a href="{{ url_for('pending', filename=spell.id) }}">Просмотреть заклинание</a>
+    </div>
+    {% endfor %}
 </div>
 {% else %}
 <h1>Страница только для администраторов</h1>
-<a href={{ url_for('index') }}>На главную</a>
+<a href="{{ url_for('index') }}">На главную</a>
 {% endif %}
 {% endblock %}

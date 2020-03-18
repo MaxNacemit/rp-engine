@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="utf-8">
+		<title>Вход и регистрация</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+	</head>
+	<body>
+		<div class="register">
+			<h1>Вход и регистрация</h1>
+			<div class="links">
+				<a href="{{ url_for('login') }}">Вход</a>
+				<a href="{{ url_for('register') }}" class="active">Регистрация</a>
+			</div>
+			<form action="{{ url_for('register') }}" method="post" autocomplete="off">
+				<label for="username">
+					<i class="fas fa-user"></i>
+				</label>
+				<input type="text" name="username" placeholder="логин" id="username" required>
+				<label for="password">
+					<i class="fas fa-lock"></i>
+				</label>
+				<input type="password" name="password" placeholder="пароль" id="password" required>
+				<div class="msg">{{ msg }}</div>
+				<input type="submit" value="Зарегистрироваться">
+			</form>
+		</div>
+	</body>
+</html>
