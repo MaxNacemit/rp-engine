@@ -3,31 +3,6 @@
 {% block title %}Заклинания{% endblock %}
 {% block content %}
 <h2>Добавление заклинания</h2>
-
-<script>
-    import * as alphabet from '../files/alphabet.json';
-
-    function addParameter() {
-        let param_name = prompt("Что за параметр?", "Дальность");
-        let form = document.getElementById("inputs");
-        form.innerHTML = form.innerHTML + '<input type="text" name="' + transliterate(param_name) + '">'
-    }
-
-    function transliterate(word) {
-        let answer = '';
-        let a = alphabet;
-        for (let i in word) {
-            if (word.hasOwnProperty(i)) {
-                if (a[word[i]] === undefined) {
-                    answer += word[i];
-                } else {
-                    answer += a[word[i]];
-                }
-            }
-        }
-        return answer;
-    }
-</script>
 {% if msg %}
 <div class="msg">{{ msg }}</div>
 {% endif %}
@@ -50,7 +25,7 @@
         </label>
         <p>Очевидное (по касту понятно, что за заклинание):
             <label>
-                <input name="obvious" type="checkbox">
+                <input name="is_obvious" type="checkbox">
             </label></p>
         <p>Публичное:
             <label>
@@ -59,8 +34,8 @@
         <p>Зависимости дополнительных параметров: "прямая" - прямая пропорциональность, "обратная" - обратная
             пропорциональность, "квадрат" - пропорционально квадрату параметра, "обратный квадрат", "экспонента" -
             базовый расход возводится в степень параметра.</p>
-
-        <button onClick="addParameter()" type="button">Добавить параметр</button>
+        <script charset="utf-8" src="static/js/spell.js" type="text/javascript"></script>
+        <button onclick="addParameter()">Добавить параметр</button>
         <input name="submit" type="submit">
     </div>
 </form>

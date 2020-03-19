@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
-REQ_SPELL_LABELS = {'spell_title', 'spell_cost', 'learning_const', 'description'}
+REQ_SPELL_LABELS = {'spell_title', 'spell_cost', 'learning_const', 'description', 'is_public', 'is_obvious'}
 
 db = Database('ivan', 'strongsqlpassword')
 
@@ -73,19 +73,19 @@ def home():
     return redirect(url_for('login'))
 
 
-# TODO: add support for custom parameters
-# TODO: add spells to database
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
     if 'loggedin' in session:
         msg = ''
         if request.method == 'POST':
-            request.form = {k: v for k, v in request.form.items() if v != '' and k != 'submit'}
-            spell_keys = set(request.form)
-            if REQ_SPELL_LABELS.issubset(spell_keys):
-                request.form = dict(request.form)
-                request.form['is_public'] = 1 if 'is_public' in spell_keys else 0
-                request.form['is_obvious'] = 1 if 'is_obvious' in spell_keys else 0
+            form = dict(request.form)
+            form.pop('submit')
+            form['is_public'] = 1 if 'is_public' in form.keys() else 0
+            form['is_obvious'] = 1 if 'is_obvious' in form.keys() else 0
+            if REQ_SPELL_LABELS.issubset(form):
+                # TODO database
+                base = []
+                extra = []
                 msg = 'Заклинание отправлено на модерацию!'
             else:
                 msg = 'Заполните все параметры!'
@@ -109,4 +109,4 @@ def edit_profile():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
