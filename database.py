@@ -12,7 +12,7 @@ class Database:
         # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
         # dependence is mul(*), div, msq(*x^2), dsq or exp
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), is_public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8))')
+            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), is_public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8), approved BOOLEAN)')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT, FOREIGN KEY (spell) REFERENCES spells (id), dependence VARCHAR(3))')
         self.cursor.execute(
