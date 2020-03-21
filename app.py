@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
-REQ_SPELL_LABELS = {'spell_title', 'spell_cost', 'learning_const', 'description', 'is_public', 'is_obvious'}
+REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
 
 db = Database('ivan', 'strongsqlpassword')
 
@@ -79,13 +79,20 @@ def submit():
         msg = ''
         if request.method == 'POST':
             form = dict(request.form)
-            form.pop('submit')
-            form['is_public'] = 1 if 'is_public' in form.keys() else 0
-            form['is_obvious'] = 1 if 'is_obvious' in form.keys() else 0
-            if REQ_SPELL_LABELS.issubset(form):
+            form['is_public'] = '1' if 'is_public' in form.keys() else '0'
+            form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
+            print(form)
+            if set(REQ_SPELL_LABELS).issubset(form):
                 # TODO database
-                base = []
+                base = REQ_SPELL_LABELS
                 extra = []
+                for key in form.keys():
+                    if key in REQ_SPELL_LABELS:
+                        base[base.index(key)] = form[key]
+                    else:
+                        extra.append([key, form[key]])
+                print(base, extra)
+                db.add_spell(base, extra)
                 msg = 'Заклинание отправлено на модерацию!'
             else:
                 msg = 'Заполните все параметры!'

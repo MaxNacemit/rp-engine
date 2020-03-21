@@ -2,7 +2,7 @@ function addParameter() {
     // TODO no page refresh on text field addition
     let param_name = prompt("Что за параметр?", "дальность");
     let form = document.getElementById("inputs");
-    form.innerHTML = form.innerHTML + '<input type="text" name="' + transliterate(param_name) + '">'
+    form.innerHTML = form.innerHTML + param_name + ': <input type="text" name="' + transliterate(param_name) + '"><br><br>'
 }
 
 function transliterate(word) {
