@@ -2,7 +2,7 @@ function addParameter() {
     // TODO no page refresh on text field addition
     let param_name = prompt("Что за параметр?", "дальность");
     let form = document.getElementById("inputs");
-    let dependency_selector = transliterate(param_name) + ': <select name="' + transliterate(param_name) + '">' +
+    let dependency_selector = param_name + ': <select name="' + transliterate(param_name) + '">' +
     '<option value="linear">Прямая</option>' +
     '<option value="square">Квадрат</option>' +
     '<option value="divide">Обратная</option>' +
