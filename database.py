@@ -28,6 +28,8 @@ class Database:
         :param spell_params: кортеж (название, публичность, очевидность(=способность понять по описанию каста, что кастуется), требования по константе обученности, расход маны, адрес файла с описанием, школа)
         :param spell_variables: массив кортежей вида (параметр, характер зависимости)
         """
+        spell_params = list(map(lambda x: x[0], spell_params))
+        spell_variables = list(map(lambda x: x[0], spell_variables))
         insert_request = 'INSERT INTO spells (spell_title, is_public, is_obvious, learning_const, mana_cost, description, school, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, false)'
         self.cursor.execute(insert_request, spell_params)
         self.con.commit()
@@ -87,9 +89,9 @@ class Database:
         if user_data is not None:
             return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
-    def modify_user(self, user_id, status):
-        request = 'UPDATE users SET status = %s WHERE id = %s'
-        self.cursor.execute(request, (user_id, status))
+    def modify_user(self, login, status):
+        request = 'UPDATE users SET status = %s WHERE login = %s'
+        self.cursor.execute(request, (status, login))
 
     def approve_spell(self, spell_id):
         self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id,))
