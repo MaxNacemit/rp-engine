@@ -12,13 +12,13 @@ class Database:
         # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
         # dependence is mul(*), div, msq(*x^2), dsq or exp
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), is_public BOOLEAN, obvious BOOLEAN, required_const REAL, mana_cost INT, description_file VARCHAR(100), school VARCHAR(8), approved BOOLEAN)')
+            'CREATE TABLE IF NOT EXISTS spells (id INT AUTO_INCREMENT PRIMARY KEY, spell_title VARCHAR(100), is_public BOOLEAN, is_obvious BOOLEAN, learning_const REAL, mana_cost INT, description TEXT, school VARCHAR(8), approved BOOLEAN)')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), spell INT, FOREIGN KEY (spell) REFERENCES spells (id), dependence VARCHAR(3))')
+            'CREATE TABLE IF NOT EXISTS spell_reqs (id INT AUTO_INCREMENT PRIMARY KEY, req_title VARCHAR(50), spell INT, FOREIGN KEY (spell) REFERENCES spells (id), dependence VARCHAR(3))')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS users (login VARCHAR(50) PRIMARY KEY, pass_hash CHAR(130), nickname VARCHAR(50), max_mana INT, learning_const REAL, school VARCHAR(8), biography_file VARCHAR(50), status INT)')
+            'CREATE TABLE IF NOT EXISTS users (login VARCHAR(50) PRIMARY KEY, pass_hash CHAR(130), nickname VARCHAR(50), max_mana INT, learning_const REAL, school VARCHAR(8), biography_file TEXT, status INT)')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), danger_class INT, description_file VARCHAR(50))')
+            'CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, beast_name VARCHAR(50), danger_class INT, description_file TEXT)')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spells_knowledge(user_login VARCHAR(50), spell_id INT, FOREIGN KEY (user_login) REFERENCES users (login), FOREIGN KEY(spell_id) REFERENCES spells (id))')
 
@@ -28,14 +28,14 @@ class Database:
         :param spell_params: кортеж (название, публичность, очевидность(=способность понять по описанию каста, что кастуется), требования по константе обученности, расход маны, адрес файла с описанием, школа)
         :param spell_variables: массив кортежей вида (параметр, характер зависимости)
         """
-        insert_request = 'INSERT INTO spells (name, is_public, obvious, required_const, mana_cost, description_file, school, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, false)'
+        insert_request = 'INSERT INTO spells (spell_title, is_public, is_obvious, learning_const, mana_cost, description, school, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, false)'
         self.cursor.execute(insert_request, spell_params)
-        self.cursor.commit()
+        self.con.commit()
         spell_id = self.cursor.lastrowid
-        req_request = 'INSERT INTO spell_reqs (name, spell, dependence) VALUES (%s, %s, %s)'
+        req_request = 'INSERT INTO spell_reqs (req_title, spell, dependence) VALUES (%s, %s, %s)'
         for req_set in spell_variables:
             self.cursor.execute(req_request, (req_set[0], spell_id, req_set[1]))
-            self.con.cursor.commit()
+            self.con.commit()
 
     def is_available(self, login):
         check = 'SELECT * FROM users WHERE login = %s'
@@ -45,6 +45,7 @@ class Database:
         return False
 
     def register_user(self, login, password, char_data=None):
+        # TODO VK OAuth
         if char_data is None:
             char_data = [0, 0, "none", "biography"]
 
@@ -80,6 +81,7 @@ class Database:
         spells = public_spells + priv_ids
         return spells
 
+    # TODO check if cast is available, edit after moderation
     def check_login(self, username, password):
         user_data = self.get_user_dict(username)
         if user_data is not None:

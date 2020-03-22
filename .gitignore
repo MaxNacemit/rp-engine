@@ -130,3 +130,4 @@ dmypy.json
 
 #PyCharm dir
 .idea/
+/static/js/jquery.js
