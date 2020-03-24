@@ -1,8 +1,10 @@
 import mysql.connector
 from passlib.hash import pbkdf2_sha512
-
+# TODO allow modification of spells when approving
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
+
+SPELL_DICT_LABELS = ('id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
 
 class Database:
@@ -36,6 +38,34 @@ class Database:
         for req_set in spell_variables:
             self.cursor.execute(req_request, (req_set[0], spell_id, req_set[1]))
             self.con.commit()
+
+    def get_spell_dict(self, spell_id):
+        self.cursor.execute('SELECT * FROM spells WHERE id=%s', (spell_id, ))
+        spell = self.cursor.fetchone()
+        if spell:
+            return dict(zip(SPELL_DICT_LABELS, spell))
+        else:
+            return None
+
+    def approve_spell(self, spell_id):
+        req = 'UPDATE spells SET status=1 WHERE spell_id=%s'
+        self.cursor.execute(req, (spell_id, ))
+
+    def get_unapproved_spells_pages(self):
+        self.cursor.execute('SELECT * FROM spells WHERE approved="false"')
+        spells_list = self.cursor.fetchall()
+        pages = []
+        while spells_list:
+            page = []
+            for i in range(10):
+                spell = spells_list.pop().get_spell_dict()
+                if spell:
+                    page.append(spell)
+                else:
+                    break
+            pages.append(page)
+        return pages
+
 
     def is_available(self, login):
         check = 'SELECT * FROM users WHERE login = %s'

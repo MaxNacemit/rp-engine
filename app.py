@@ -114,6 +114,32 @@ def profile():
 def edit_profile():
     return render_template('edit_profile.html')
 
+@app.route('/spells_pending')
+def spells_pending():
+    return redirect(url_for('spells_pending', page=0))
+
+@app_route('/spells_pending/<page>')
+def pending_spells(page):
+    try:
+        spell_list = db.get_unapproved_spells_pages()[int(page)]
+    except:
+        return redirect(url_for('spells_pending', page=0))
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if master:
+        return render_template('spells_appoval.html', page=spell_list)
+    else:
+        return redirect(url_for('home'))
+
+@app_route('/approve/<spell_id>')
+def approve_spell(spell_id):
+    spell = db.get_spell_dict(spell_id)
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if spell and master:
+        db.approve_spell(spell_id)
+    else:
+        return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run()
