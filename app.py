@@ -7,10 +7,10 @@ from database import Database
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
 
-db = Database('ivan', 'strongsqlpassword')
+db = Database('knowledge', 'LainisOmniscient')
 
 app = Flask(__name__)
-app.secret_key = 'very secret and reliable secret key'
+app.secret_key = 'hbiu;ojdkxlsjuif;doijsdus;oidxhush;oijxskjdhufysu;icojxys;ufijyu7;fs7u'
 
 
 # TODO: add decorators to check login on user-only pages
@@ -30,7 +30,7 @@ def login():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            msg = 'Неправильный логин/пароль!'
+            msg = 'Неправильный логин/пароль!'    
     return render_template('index.html', msg=msg)
 
 
@@ -79,8 +79,8 @@ def submit():
         msg = ''
         if request.method == 'POST':
             form = dict(request.form)
-            form['is_public'] = '1' if 'is_public' in form.keys() else '0'
-            form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
+            form['is_public'] = ['1'] if 'is_public' in form.keys() else ['0']
+            form['is_obvious'] = ['1'] if 'is_obvious' in form.keys() else ['0']
             print(form)
             if set(REQ_SPELL_LABELS).issubset(form):
                 # TODO database
@@ -142,4 +142,4 @@ def approve_spell(spell_id):
         return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")
