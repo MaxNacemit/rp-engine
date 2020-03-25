@@ -131,6 +131,16 @@ def pending_spells(page):
     else:
         return redirect(url_for('home'))
 
+@app.route('/pending/<spell_id>')
+def pending(spell_id):
+    spell = db.get_spell_dict(spell_id)
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if spell and master:
+        return render_template('spell.html', spell=spell)
+    else:
+        return redirect(url_for('home'))
+
 @app_route('/approve/<spell_id>')
 def approve_spell(spell_id):
     spell = db.get_spell_dict(spell_id)

@@ -6,7 +6,7 @@
     (% for spell in page %}
     <div class="spell">
         <h4>{{ spell['spell_title'] }}</h4>
-        <a href="{{ url_for('pending', filename=spell.id) }}">Просмотреть заклинание</a>
+        <a href="{{ url_for('pending', id=spell['id']) }}">Просмотреть заклинание</a>
     </div>
     {% endfor %}
 </div>
