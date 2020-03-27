@@ -7,10 +7,10 @@ from database import Database
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
 
-db = Database('ivan', 'strongsqlpassword')
+db = Database('knowledge', 'LainisOmniscient')
 
 app = Flask(__name__)
-app.secret_key = 'very secret and reliable secret key'
+app.secret_key = 'hbiu;ojdkxlsjuif;doijsdus;oidxhush;oijxskjdhufysu;icojxys;ufijyu7;fs7u'
 
 
 # TODO: add decorators to check login on user-only pages
@@ -30,7 +30,7 @@ def login():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            msg = 'Неправильный логин/пароль!'
+            msg = 'Неправильный логин/пароль!'    
     return render_template('index.html', msg=msg)
 
 
@@ -79,8 +79,8 @@ def submit():
         msg = ''
         if request.method == 'POST':
             form = dict(request.form)
-            form['is_public'] = '1' if 'is_public' in form.keys() else '0'
-            form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
+            form['is_public'] = ['1'] if 'is_public' in form.keys() else ['0']
+            form['is_obvious'] = ['1'] if 'is_obvious' in form.keys() else ['0']
             print(form)
             if set(REQ_SPELL_LABELS).issubset(form):
                 # TODO database
@@ -114,6 +114,42 @@ def profile():
 def edit_profile():
     return render_template('edit_profile.html')
 
+@app.route('/spells_pending')
+def spells_pending():
+    return redirect(url_for('spells_pending', page=0))
+
+@app_route('/spells_pending/<page>')
+def pending_spells(page):
+    try:
+        spell_list = db.get_unapproved_spells_pages()[int(page)]
+    except:
+        return redirect(url_for('spells_pending', page=0))
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if master:
+        return render_template('spells_appoval.html', page=spell_list)
+    else:
+        return redirect(url_for('home'))
+
+@app.route('/pending/<spell_id>')
+def pending(spell_id):
+    spell = db.get_spell_dict(spell_id)
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if spell and master:
+        return render_template('spell.html', spell=spell)
+    else:
+        return redirect(url_for('home'))
+
+@app_route('/approve/<spell_id>')
+def approve_spell(spell_id):
+    spell = db.get_spell_dict(spell_id)
+    curr_user = db.get_user_dict(session['username'])
+    master = curr_user['status'] > 1
+    if spell and master:
+        db.approve_spell(spell_id)
+    else:
+        return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")
