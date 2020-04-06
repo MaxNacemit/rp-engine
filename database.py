@@ -1,6 +1,5 @@
 import mysql.connector
 from passlib.hash import pbkdf2_sha512
-# TODO allow modification of spells when approving
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
 
@@ -48,6 +47,14 @@ class Database:
             return dict(zip(SPELL_DICT_LABELS, spell))
         else:
             return None
+
+    def get_spell_params(self, spell_id):
+        self.cursor.execute('SELECT * FROM spell_reqs WHERE spell=%s', (spell_id, ))
+        params = self.cursor.fetchall()
+        params_dict = dict()
+        for p in params:
+            params_dict[p[2]] = p[3]
+        return params_dict
 
     def approve_spell(self, spell_id):
         req = 'UPDATE spells SET status=1 WHERE spell_id=%s'
@@ -123,5 +130,3 @@ class Database:
         request = 'UPDATE users SET status = %s WHERE login = %s'
         self.cursor.execute(request, (status, login))
 
-    def approve_spell(self, spell_id):
-        self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id,))
