@@ -1,4 +1,6 @@
 import re
+from functools import wraps
+from os import getenv, environ
 
 from flask import Flask, render_template, request, redirect, url_for, session
 
@@ -6,14 +8,35 @@ from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
-
-db = Database('knowledge', 'LainisOmniscient')
+environ['KN_USERNAME'] = 'ivan'
+environ['KN_PASSWORD'] = 'strongsqlpassword'
+environ['FLASK_SECRET_KEY'] = 'verystrongandsecretkey'
+db = Database(getenv('KN_USERNAME'), getenv('KN_PASSWORD'))
 
 app = Flask(__name__)
-app.secret_key = 'hbiu;ojdkxlsjuif;doijsdus;oidxhush;oijxskjdhufysu;icojxys;ufijyu7;fs7u'
+app.secret_key = getenv('FLASK_SECRET_KEY')
 
 
-# TODO: add decorators to check login on user-only pages
+def login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if 'loggedin' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+def master_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        # print(f.__name__, args, kwargs)
+        curr_user = db.get_user_dict(session['username'])
+        if 'loggedin' not in session and curr_user['status'] <= 1:
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -30,7 +53,7 @@ def login():
             session['username'] = username
             return redirect(url_for('home'))
         else:
-            msg = 'Неправильный логин/пароль!'    
+            msg = 'Неправильный логин/пароль!'
     return render_template('index.html', msg=msg)
 
 
@@ -51,7 +74,7 @@ def register():
         if not account:
             msg = 'Аккаунт уже зарегистрирован!'
         elif not re.match(r'[A-Za-z0-9]+', username):
-            msg = 'В логине нельзя использовать спец. сиволы!'
+            msg = 'В логине нельзя использовать спец. символы!'
         elif len(password) < 8:
             msg = 'Выберите пароль не менее 8 знаков!'
         elif not username or not password:
@@ -67,89 +90,78 @@ def register():
 
 
 @app.route('/home')
+@login_required
 def home():
-    if 'loggedin' in session:
-        return render_template('base.html', username=session['username'])
-    return redirect(url_for('login'))
+    return render_template('home.html', username=session['username'])
 
 
 @app.route('/submit', methods=['GET', 'POST'])
+@login_required
 def submit():
-    if 'loggedin' in session:
-        msg = ''
-        if request.method == 'POST':
-            form = dict(request.form)
-            form['is_public'] = ['1'] if 'is_public' in form.keys() else ['0']
-            form['is_obvious'] = ['1'] if 'is_obvious' in form.keys() else ['0']
-            print(form)
-            if set(REQ_SPELL_LABELS).issubset(form):
-                # TODO database
-                base = REQ_SPELL_LABELS
-                extra = []
-                for key in form.keys():
-                    if key in REQ_SPELL_LABELS:
-                        base[base.index(key)] = form[key]
-                    else:
-                        extra.append([key, form[key]])
-                print(base, extra)
-                db.add_spell(base, extra)
-                msg = 'Заклинание отправлено на модерацию!'
-            else:
-                msg = 'Заполните все параметры!'
-        return render_template('submit.html', msg=msg)
-    return redirect(url_for('login'))
+    msg = ''
+    if request.method == 'POST':
+        form = dict(request.form)
+        form['is_public'] = '1' if 'is_public' in form.keys() else '0'
+        form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
+        if set(REQ_SPELL_LABELS).issubset(form):
+            base = REQ_SPELL_LABELS
+            extra = []
+            for key in form.keys():
+                if key in REQ_SPELL_LABELS:
+                    base[base.index(key)] = form[key]
+                else:
+                    extra.append([key, form[key]])
+            db.add_spell(base, extra)
+            msg = 'Заклинание отправлено на модерацию!'
+        else:
+            msg = 'Заполните все параметры!'
+    return render_template('submit.html', msg=msg)
 
 
 @app.route('/profile')
+@login_required
 def profile():
-    if 'loggedin' in session:
-        account = db.get_user_dict(session['username'])
-        account['status'] = STATUS_DICT[account['status']]
-        return render_template('profile.html', account=account)
-    return redirect(url_for('login'))
+    account = db.get_user_dict(session['username'])
+    account['status'] = STATUS_DICT[account['status']]
+    return render_template('profile.html', account=account)
 
 
 # TODO: make a working edit_profile() function and .html file
 @app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
 def edit_profile():
     return render_template('edit_profile.html')
 
-@app.route('/spells_pending')
-def spells_pending():
-    return redirect(url_for('spells_pending', page=0))
 
-@app_route('/spells_pending/<page>')
+@app.route('/spells_pending/', defaults={'page': 0})
+@app.route('/spells_pending/<page>')
+@master_required
 def pending_spells(page):
     try:
         spell_list = db.get_unapproved_spells_pages()[int(page)]
     except:
         return redirect(url_for('spells_pending', page=0))
-    curr_user = db.get_user_dict(session['username'])
-    master = curr_user['status'] > 1
-    if master:
-        return render_template('spells_appoval.html', page=spell_list)
-    else:
-        return redirect(url_for('home'))
+    return render_template('spell_approval.html', page=spell_list)
+
 
 @app.route('/pending/<spell_id>')
+@master_required
 def pending(spell_id):
     spell = db.get_spell_dict(spell_id)
-    curr_user = db.get_user_dict(session['username'])
-    master = curr_user['status'] > 1
-    if spell and master:
+    if spell:
         return render_template('spell.html', spell=spell)
     else:
         return redirect(url_for('home'))
 
-@app_route('/approve/<spell_id>')
-def approve_spell(spell_id):
+
+@app.route('/approve/<spell_id>')
+@master_required
+def approve(spell_id):
     spell = db.get_spell_dict(spell_id)
-    curr_user = db.get_user_dict(session['username'])
-    master = curr_user['status'] > 1
-    if spell and master:
+    if spell:
         db.approve_spell(spell_id)
-    else:
-        return redirect(url_for('home'))
+    return redirect(url_for('home'))
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
