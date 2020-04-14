@@ -31,11 +31,11 @@
         </label>
         <p>Базовый расход маны:</p>
         <label>
-            <input name="mana_cost" type="number">
+            <input name="mana_cost" type="number" min="0" max="50000">
         </label>
         <p>Требуемая константа обученности:</p>
         <label>
-            <input name="learning_const" type="number">
+            <input name="learning_const" type="number" min="0.5" max="2" step="0.1">
         </label>
         <p>Очевидное (по касту понятно, что за заклинание):
             <label>
@@ -53,6 +53,7 @@
         <p>
             <button onclick="addParameter()">Добавить параметр</button>
         </p>
+
     </div>
     <button type="submit">Отправить</button>
 </form>

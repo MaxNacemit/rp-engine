@@ -1,8 +1,12 @@
 import mysql.connector
 from passlib.hash import pbkdf2_sha512
 
+# TODO allow modification of spells when approving
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
+
+SPELL_DICT_LABELS = (
+    'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
 
 class Database:
@@ -36,6 +40,34 @@ class Database:
         for req_set in spell_variables:
             self.cursor.execute(req_request, (req_set[0], spell_id, req_set[1]))
             self.con.commit()
+
+    def get_spell_dict(self, spell_id):
+        self.cursor.execute('SELECT * FROM spells WHERE id=%s', (spell_id,))
+        spell = self.cursor.fetchone()
+        if spell:
+            return dict(zip(SPELL_DICT_LABELS, spell))
+        else:
+            return None
+
+    def get_unapproved_spells_pages(self):
+        self.cursor.execute('SELECT * FROM spells WHERE approved="false"')
+        spells_list = self.cursor.fetchall()
+        pages = []
+        while spells_list:
+            page = []
+            for _ in range(10):
+                try:
+                    spell = spells_list.pop()
+                    print('spell', spell)
+                    spell = self.get_spell_dict(spell[0])
+                    if spell:
+                        page.append(spell)
+                    else:
+                        break
+                except IndexError:
+                    break
+            pages.append(page)
+        return pages
 
     def is_available(self, login):
         check = 'SELECT * FROM users WHERE login = %s'
@@ -73,11 +105,11 @@ class Database:
 
     def get_user_spells(self, user_login):
         user = self.get_user_dict(user_login)
-        pub_vals = (1, user['school'], user['learning_const'])
-        pub_req = 'SELECT id FROM spells WHERE is_public = %s AND school = %s AND required_const < %s AND approved=true'
-        public_spells = self.cursor.execute(pub_req, pub_vals).fetchall()
-        priv_req = 'SELECT spell_id FROM spells_knowledge WHERE login = %s'
-        priv_ids = self.cursor.execute(priv_req, (user['id'],)).fetchall()
+        self.cursor.execute('SELECT id FROM spells WHERE is_public = %s AND school = %s AND required_const < %s '
+                            'AND approved=true', (1, user['school'], user['learning_const']))
+        public_spells = self.cursor.fetchall()
+        self.cursor.execute('SELECT spell_id FROM spells_knowledge WHERE login = %s', (user['id'],))
+        priv_ids = self.cursor.fetchall()
         spells = public_spells + priv_ids
         return spells
 
@@ -87,9 +119,12 @@ class Database:
         if user_data is not None:
             return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
-    def modify_user(self, user_id, status):
-        request = 'UPDATE users SET status = %s WHERE id = %s'
-        self.cursor.execute(request, (user_id, status))
+    def modify_user(self, login, status):
+        request = 'UPDATE users SET status = %s WHERE login = %s'
+        self.cursor.execute(request, (status, login))
+        self.con.commit()
 
     def approve_spell(self, spell_id):
-        self.cursor.execute('UPDATE spells SET approved=true WHERE id = %s', (spell_id,))
+        request = 'UPDATE spells SET approved=TRUE WHERE id=%s'
+        self.cursor.execute(request, (spell_id,))
+        self.con.commit()

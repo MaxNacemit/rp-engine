@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h3>{{ spell['spell_title'] }}</h3>
+<hr>
+Базовый расход маны:
+<div class="spell_description">{{ spell['mana_cost'] }}</div>
+Требуемая обученность:
+<div class="spell_description">{{ spell['learning_const'] }}</div>
+Описание:
+<div class="spell_description">{{ spell['description'] }}</div>
+<!-- Тут еще должна быть возможность выбора пользователя, который получит заклинание, если оно частное
+и отображение его очевидности в человековаримом виде -->
+<a href="{{ url_for('approve', spell_id=spell['id']) }}">Одобрить заклинание</a>
+<!-- Также тут должна быть ссылка с возможностью модифицировать заклинание, если оно не подходит, и ссылка для отправки его
+в /dev/null -->
+
+{% endblock %}
