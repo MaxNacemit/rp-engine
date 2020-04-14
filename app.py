@@ -133,8 +133,8 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 
-@app.route('/spells_pending/', defaults={'page': 0})
-@app.route('/spells_pending/<page>')
+@app.route('/spells_pending/', defaults={'page': 0}, methods=['GET', 'POST'])
+@app.route('/spells_phomeending/<page>', methods=['GET', 'POST'])
 @master_required
 def pending_spells(page):
     if db.get_unapproved_spells_pages():
@@ -147,7 +147,7 @@ def pending_spells(page):
     return render_template('spell_approval.html', page=spell_list)
 
 
-@app.route('/pending/<spell_id>')
+@app.route('/pending/<spell_id>', methods=['GET', 'POST'])
 @master_required
 def pending(spell_id):
     spell = db.get_spell_dict(spell_id)
@@ -157,7 +157,8 @@ def pending(spell_id):
         return redirect(url_for('home'))
 
 
-@app.route('/approve/<spell_id>')
+# TODO improve spell moderation
+@app.route('/approve/<spell_id>', methods=['GET', 'POST'])
 @master_required
 def approve(spell_id):
     spell = db.get_spell_dict(spell_id)

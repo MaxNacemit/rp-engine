@@ -1,18 +1,30 @@
 {% extends 'layout.html' %}
+{% block title %} {{ spell['spell_title'] }} {% endblock %}
 
 {% block content %}
-<h3>{{ spell['spell_title'] }}</h3>
-<hr>
-Базовый расход маны:
-<div class="spell_description">{{ spell['mana_cost'] }}</div>
-Требуемая обученность:
-<div class="spell_description">{{ spell['learning_const'] }}</div>
-Описание:
-<div class="spell_description">{{ spell['description'] }}</div>
-<!-- Тут еще должна быть возможность выбора пользователя, который получит заклинание, если оно частное
-и отображение его очевидности в человековаримом виде -->
-<a href="{{ url_for('approve', spell_id=spell['id']) }}">Одобрить заклинание</a>
-<!-- Также тут должна быть ссылка с возможностью модифицировать заклинание, если оно не подходит, и ссылка для отправки его
-в /dev/null -->
+<form action="{{ url_for('approve', spell_id=spell['id']) }}" method="post" name="submit_spell">
+    <p>Описание заклинания:</p>
+    <label>
+        <textarea cols="80" name="description" rows="6">{{ spell['description'] }}</textarea>
+    </label>
+    <p>Школа заклинания: {{ spell['school'] }}</p>
+    <p>Базовый расход маны:</p>
+    <label>
+        <input max="50000" min="0" name="mana_cost" type="number" value="{{ spell['mana_cost'] }}">
+    </label>
+    <p>Требуемая константа обученности:</p>
+    <label>
+        <input max="2" min="0.5" name="learning_const" step="0.1" type="number" value="{{ spell['learning_const'] }}">
+    </label>
+    <p>
+        <button type="submit">Одобрить заклинание</button>
+    </p>
+    <p>
+        <button type="submit" value="delete">Удалить заклинание</button>
+    </p>
+    <p>
+        <button type="submit" value="ban">Забанить автора</button>
+    </p>
+</form>
 
 {% endblock %}
