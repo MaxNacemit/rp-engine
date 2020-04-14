@@ -8,8 +8,8 @@ from database import Database
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
-environ['KN_USERNAME'] = 'ivan'
-environ['KN_PASSWORD'] = 'strongsqlpassword'
+environ['KN_USERNAME'] = 'root'
+environ['KN_PASSWORD'] = 'nacemit'
 environ['FLASK_SECRET_KEY'] = 'verystrongandsecretkey'
 db = Database(getenv('KN_USERNAME'), getenv('KN_PASSWORD'))
 
@@ -137,10 +137,13 @@ def edit_profile():
 @app.route('/spells_pending/<page>')
 @master_required
 def pending_spells(page):
-    try:
-        spell_list = db.get_unapproved_spells_pages()[int(page)]
-    except:
-        return redirect(url_for('spells_pending', page=0))
+    if db.get_unapproved_spells_pages():
+        try:
+            spell_list = db.get_unapproved_spells_pages()[int(page)]
+        except:
+            return redirect(url_for('spells_pending', page=0))
+    else:
+        spell_list = None
     return render_template('spell_approval.html', page=spell_list)
 
 
