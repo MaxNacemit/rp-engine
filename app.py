@@ -161,11 +161,10 @@ def pending(spell_id):
 @app.route('/approve/<spell_id>', methods=['GET', 'POST'])
 @master_required
 def approve(spell_id):
-    form = dict(request.form)
     spell = db.get_spell_dict(spell_id)
-    if spell and form['submitter'] == "approve":
+    if spell and request.form['submitter'] == 'approve':
         db.approve_spell(spell_id)
-    elif spell and form['submitter'] == "delete":
+    elif spell and request.form['submitter'] == 'delete':
         db.delete_spell(spell_id)
     return redirect(url_for('home'))
 

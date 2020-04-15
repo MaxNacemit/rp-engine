@@ -72,7 +72,7 @@ class Database:
         return params_dict
 
     def approve_spell(self, spell_id):
-        req = 'UPDATE spells SET approved=1 WHERE id=%s'
+        req = 'UPDATE spells SET approved="true" WHERE id=%s'
         self.cursor.execute(req, (spell_id,))
         self.con.commit()
 
