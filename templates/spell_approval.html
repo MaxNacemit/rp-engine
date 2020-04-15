@@ -1,14 +1,16 @@
-{% extends base.html %}
+{% extends 'layout.html' %}
 
 {% block content %}
 <h2> Ожидающие приема заклинания: </h2>
+{% if page %}
 <div class="spells-pending">
-    (% for spell in page %}
+    {% for spell in page %}
     <div class="spell">
         <h4>{{ spell['spell_title'] }}</h4>
-        <a href="{{ url_for('pending', id=spell['id']) }}">Просмотреть заклинание</a>
+        <a href="{{ url_for('pending', spell_id=spell['id']) }}">Просмотреть заклинание</a>
     </div>
     {% endfor %}
 </div>
+{% endif %}
 
 {% endblock %}
