@@ -134,7 +134,7 @@ def edit_profile():
 
 
 @app.route('/spells_pending/', defaults={'page': 0}, methods=['GET', 'POST'])
-@app.route('/spells_phomeending/<page>', methods=['GET', 'POST'])
+@app.route('/spells_pending/<page>', methods=['GET', 'POST'])
 @master_required
 def pending_spells(page):
     if db.get_unapproved_spells_pages():
@@ -161,9 +161,12 @@ def pending(spell_id):
 @app.route('/approve/<spell_id>', methods=['GET', 'POST'])
 @master_required
 def approve(spell_id):
+    form = dict(request.form)
     spell = db.get_spell_dict(spell_id)
-    if spell:
+    if spell and form['submitter'] == "approve":
         db.approve_spell(spell_id)
+    elif spell and form['submitter'] == "delete":
+        db.delete_spell(spell_id)
     return redirect(url_for('home'))
 
 

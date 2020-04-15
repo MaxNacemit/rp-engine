@@ -17,13 +17,13 @@
         <input max="2" min="0.5" name="learning_const" step="0.1" type="number" value="{{ spell['learning_const'] }}">
     </label>
     <p>
-        <button type="submit">Одобрить заклинание</button>
+        <button name="submitter" type="submit" value="approve">Одобрить заклинание</button>
     </p>
     <p>
-        <button type="submit" value="delete">Удалить заклинание</button>
+        <button name="submitter" type="submit" value="delete">Удалить заклинание</button>
     </p>
     <p>
-        <button type="submit" value="ban">Забанить автора</button>
+        <button name="submitter" type="submit" value="ban">Забанить автора</button>
     </p>
 </form>
 
