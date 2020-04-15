@@ -22,6 +22,17 @@ class Database:
             'CREATE TABLE IF NOT EXISTS beasts (id INT AUTO_INCREMENT PRIMARY KEY, beast_name VARCHAR(50), danger_class INT, description_file TEXT)')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spells_knowledge(user_login VARCHAR(50), spell_id INT, FOREIGN KEY (user_login) REFERENCES users (login), FOREIGN KEY(spell_id) REFERENCES spells (id))')
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS locations(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), description TEXT)')
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS forum_posts(author VARCHAR(50), datetime TIMESTAMP, location INT, content TEXT, id INT AUTO_INCREMENT PRIMARY KEY, FOREIGN KEY (author) REFERENCES users (login), FOREIGN KEY (location) REFERENCES locations(id))')
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS casts(id INT AUTO_INCREMENT PRIMARY KEY, spell INT, post INT, FOREIGN KEY (post) REFERENCES forum_posts(id), FOREIGN KEY (spell) REFERENCES spells (id))')
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS cast_params(cast_id INT, param_name VARCHAR(50), param_value REAL, FOREIGN KEY (cast_id) REFERENCES casts(id))')
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS compendium_articles(id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(50), article TEXT)')
+
 
     def add_spell(self, spell_params, spell_variables):
         """
@@ -39,6 +50,11 @@ class Database:
         for req_set in spell_variables:
             self.cursor.execute(req_request, (req_set[0], spell_id, req_set[1]))
             self.con.commit()
+
+    def delete_spell(self, spell_id):
+        self.cursor.execute('DELETE FROM spells WHERE id=%s', (int(spell_id), ))
+        self.cursor.execute('DELETE FROM spell_reqs WHERE spell=%s', (int(spell_id),))
+        self.con.commit()
 
     def get_spell_dict(self, spell_id):
         self.cursor.execute('SELECT * FROM spells WHERE id=%s', (spell_id, ))
@@ -129,4 +145,7 @@ class Database:
     def modify_user(self, login, status):
         request = 'UPDATE users SET status = %s WHERE login = %s'
         self.cursor.execute(request, (status, login))
+
+    def get_post_pages(self, location):
+        request = 'SELECT * FROM forum_posts WHERE location=%s'
 
