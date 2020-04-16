@@ -51,8 +51,8 @@ class Database:
             self.con.commit()
 
     def delete_spell(self, spell_id):
-        self.cursor.execute('DELETE FROM spells WHERE id=%s', (int(spell_id), ))
         self.cursor.execute('DELETE FROM spell_reqs WHERE spell=%s', (int(spell_id),))
+        self.cursor.execute('DELETE FROM spells WHERE id=%s', (int(spell_id), ))
         self.con.commit()
 
     def get_spell_dict(self, spell_id):
