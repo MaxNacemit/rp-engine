@@ -103,18 +103,19 @@ def submit():
         form = dict(request.form)
         form['is_public'] = '1' if 'is_public' in form.keys() else '0'
         form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
-        if set(REQ_SPELL_LABELS).issubset(form):
-            base = REQ_SPELL_LABELS
+        if set(REQ_SPELL_LABELS).issubset(set(form.keys())):
+            base = [0, 0, 0, 0, 0, 0, 0]
             extra = []
             for key in form.keys():
                 if key in REQ_SPELL_LABELS:
-                    base[base.index(key)] = form[key]
+                    base[REQ_SPELL_LABELS.index(key)] = form[key]
                 else:
-                    extra.append([key, form[key]])
+                    extra.append((key, form[key]))
+            base = tuple(base)
             db.add_spell(base, extra)
-            msg = 'Заклинание отправлено на модерацию!'
+            msg = "Заклинание отправлено на модерацию!"
         else:
-            msg = 'Заполните все параметры!'
+            msg = "Заполните все поля!"
     return render_template('submit.html', msg=msg)
 
 

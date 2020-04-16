@@ -7,5 +7,5 @@ function addParameter() {
         '<option value="div">Обратная</option>' +
         '<option value="dsq">Обратный квадрат</option>' +
         '<option value="exp">Экспонента</option> </select>';
-    form.innerHTML = form.innerHTML + '<br><br>' + dependency_selector;
+    form.insertAdjacentHTML("beforeend", dependency_selector)
 }

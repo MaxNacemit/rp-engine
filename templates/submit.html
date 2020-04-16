@@ -7,7 +7,7 @@
 <div class="msg">{{ msg }}</div>
 {% endif %}
 <form action="{{ url_for('submit') }}" method="post" name="submit_spell">
-    <div id="inputs">
+    <div>
         <p>Название заклинания:</p>
         <label>
             <input name="spell_title" size=50 type="text">
@@ -51,6 +51,7 @@
         <p>Добавление параметров:</p>
         <button onclick="addParameter()" type="button">Добавить параметр</button>
     </div>
+    <div id="inputs"></div>
     <br>
     <button type="submit">Отправить</button>
 </form>
