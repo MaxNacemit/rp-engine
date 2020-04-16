@@ -108,7 +108,11 @@ def submit():
             extra = []
             for key in form.keys():
                 if key in REQ_SPELL_LABELS:
-                    base[REQ_SPELL_LABELS.index(key)] = form[key]
+                    try:
+                        base[REQ_SPELL_LABELS.index(key)] = form[key][1]#проверка на наш комп
+                        base[REQ_SPELL_LABELS.index(key)] = form[key]
+                    except:
+                        base[REQ_SPELL_LABELS.index(key)] = form[key][0]
                 else:
                     extra.append((key, form[key]))
             base = tuple(base)
