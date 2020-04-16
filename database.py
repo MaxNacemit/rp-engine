@@ -3,7 +3,8 @@ from passlib.hash import pbkdf2_sha512
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
 
-SPELL_DICT_LABELS = ('id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
+SPELL_DICT_LABELS = (
+'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
 
 class Database:
@@ -40,8 +41,6 @@ class Database:
         :param spell_params: кортеж (название, публичность, очевидность(=способность понять по описанию каста, что кастуется), требования по константе обученности, расход маны, адрес файла с описанием, школа)
         :param spell_variables: массив кортежей вида (параметр, характер зависимости)
         """
-        spell_params = list(map(lambda x: x[0], spell_params))
-        spell_variables = list(map(lambda x: x[0], spell_variables))
         insert_request = 'INSERT INTO spells (spell_title, is_public, is_obvious, learning_const, mana_cost, description, school, approved) VALUES (%s, %s, %s, %s, %s, %s, %s, false)'
         self.cursor.execute(insert_request, spell_params)
         self.con.commit()
@@ -57,7 +56,7 @@ class Database:
         self.con.commit()
 
     def get_spell_dict(self, spell_id):
-        self.cursor.execute('SELECT * FROM spells WHERE id=%s', (spell_id, ))
+        self.cursor.execute('SELECT * FROM spells WHERE id=%s', (spell_id,))
         spell = self.cursor.fetchone()
         if spell:
             return dict(zip(SPELL_DICT_LABELS, spell))
@@ -65,7 +64,7 @@ class Database:
             return None
 
     def get_spell_params(self, spell_id):
-        self.cursor.execute('SELECT * FROM spell_reqs WHERE spell=%s', (spell_id, ))
+        self.cursor.execute('SELECT * FROM spell_reqs WHERE spell=%s', (spell_id,))
         params = self.cursor.fetchall()
         params_dict = dict()
         for p in params:
@@ -73,8 +72,9 @@ class Database:
         return params_dict
 
     def approve_spell(self, spell_id):
-        req = 'UPDATE spells SET status=1 WHERE spell_id=%s'
-        self.cursor.execute(req, (spell_id, ))
+        req = 'UPDATE spells SET approved="true" WHERE id=%s'
+        self.cursor.execute(req, (spell_id,))
+        self.con.commit()
 
     def get_unapproved_spells_pages(self):
         self.cursor.execute('SELECT * FROM spells WHERE approved="false"')
@@ -82,15 +82,18 @@ class Database:
         pages = []
         while spells_list:
             page = []
-            for i in range(10):
-                spell = spells_list.pop().get_spell_dict()
-                if spell:
-                    page.append(spell)
-                else:
+            for _ in range(10):
+                try:
+                    spell = spells_list.pop()
+                    spell = self.get_spell_dict(spell[0])
+                    if spell:
+                        page.append(spell)
+                    else:
+                        break
+                except IndexError:
                     break
             pages.append(page)
         return pages
-
 
     def is_available(self, login):
         check = 'SELECT * FROM users WHERE login = %s'

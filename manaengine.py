@@ -1,14 +1,16 @@
 import threading
+import time
 
 
-class ManaCounter():
+class ManaCounter:
     def __init__(self):
         self.mages = dict()
         self.regenerator = threading.Thread(None, self.time_regenerate)
         self.regenerator.start()
 
     def add_player(self, player_name, player_const, player_mana, player_regeneration):
-        self.mages[player_name] = {'mana_const': player_const, 'current_mana': player_mana, 'max_mana': player_mana, 'regeneration': player_regeneration, 'lifetime_cast': 0}
+        self.mages[player_name] = {'mana_const': player_const, 'current_mana': player_mana, 'max_mana': player_mana,
+                                   'regeneration': player_regeneration, 'lifetime_cast': 0}
 
     def modify_parameter(self, player_name, parameter, modify_expression):
         expression = modify_expression.lstrip.split()
@@ -46,7 +48,8 @@ class ManaCounter():
         self.mages[player]['lifetime_cast'] += int(cost)
 
     def regenerate(self, player):
-        self.mages[player]['current_mana'] += 5 * self.mages[player]['regeneration'] #5 - потому что в 1 посте 5 секунд; эта штука выполняется при оставлении поста игроком
+        self.mages[player]['current_mana'] += 5 * self.mages[player][
+            'regeneration']  # 5 - потому что в 1 посте 5 секунд; эта штука выполняется при оставлении поста игроком
 
     def time_regenerate(self):
         # функция восстанавливает ману всем на максимум раз в трое суток
@@ -54,4 +57,3 @@ class ManaCounter():
         for player in players:
             self.mages[player]['current_mana'] = self.mages[player]['max_mana']
         time.sleep(259200)
-
