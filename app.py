@@ -114,7 +114,12 @@ def submit():
                     except:
                         base[REQ_SPELL_LABELS.index(key)] = form[key][0]
                 else:
-                    extra.append((key, form[key]))
+                    try:
+                        extra.append((key, form[key][1]))
+                        extra.pop()
+                        extra.append((key, form[key]))
+                    except:
+                        extra.append((key, form[key][0]))
             base = tuple(base)
             db.add_spell(base, extra)
             msg = "Заклинание отправлено на модерацию!"
