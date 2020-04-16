@@ -103,12 +103,12 @@ def submit():
         form = dict(request.form)
         form['is_public'] = '1' if 'is_public' in form.keys() else '0'
         form['is_obvious'] = '1' if 'is_obvious' in form.keys() else '0'
-        if set(REQ_SPELL_LABELS).issubset(form):
-            base = REQ_SPELL_LABELS
+        if set(REQ_SPELL_LABELS).issubset(form.keys()):
+            base = [0, 0, 0, 0, 0, 0, 0]
             extra = []
             for key in form.keys():
                 if key in REQ_SPELL_LABELS:
-                    base[base.index(key)] = form[key]
+                    base[REQ_SPELL_LABELS.index(key)] = form[key]
                 else:
                     extra.append([key, form[key]])
             db.add_spell(base, extra)
