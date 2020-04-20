@@ -149,6 +149,61 @@ class Database:
         request = 'UPDATE users SET status = %s WHERE login = %s'
         self.cursor.execute(request, (status, login))
 
+    def get_post(self, post_id):
+        result = dict()
+        self.cursor.execute('SELECT * FROM forum_posts WHERE id=%s')
+        post = self.cursor.fetchone()
+        result['post'] = {'author': post[0], 'time': post[1], 'content': post[3]}
+        self.cursor.execute('SELECT * FROM casts WHERE post=%s', (post_id))
+        spells = self.cursor.fetchall()
+        for spell in spells:
+            cast_id = spell[0]
+            spell_title, obvious = self.get_spell_dict(spell[1])['spell_title'], self.get_spell_dict(spell[1])['obvious']
+            self.cursor.execute('SELECT * FROM cast_reqs WHERE cast_id=%s', (cast_id, ))
+            params = self.cursor.fetchall()
+            result[spell_title] = list(map(lambda x: {x[1]: x[2]}, params))
+            result[spell_title]['obvious'] = obvious
+        return result
+
+    def make_post(self, location, author, content, casts): #casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
+        self.cursor.execute('INSERT INTO forum_posts (author, location, content) VALUES (%s, %s, %s)', (author, location, content))
+        self.con.commit()
+        post_id = self.cursor.lastrowid
+        for spell in casts:
+            self.cursor.execute('INSERT INTO casts (spell, post) VALUES (%s, %s)', (spell['spell'], post_id))
+            self.con.commit()
+            cast = self.cursor.lastrowid
+            for param in spell['params'].keys(): #стоимость заклинания вычисляется до запуска этой функции
+                self.cursor.execute('INSERT INTO cast_params (cast_id, param_name, param_value) VALUES (%s, %s, %s)', (cast, param, spell['params'][param]))
+                self.con.commit()
+
+    def delete_post(self, post_id):
+        self.cursor.execute('DELETE FROM forum_posts WHERE id=%s', (post_id, ))
+        self.con.commit()
+
+    def get_locations(self):
+        self.cursor.execute('SELECT * FROM locations')
+        locations = list(map(lambda x: {'name': x[0], 'description': x[1]}, self.cursor.fetchall()))
+        return locations
+
     def get_post_pages(self, location):
-        request = 'SELECT * FROM forum_posts WHERE location=%s'
+        self.cursor.execute('SELECT * FROM forum_posts WHERE location=%s', (location,))
+        posts = self.cursor.fetchall()
+        pages = []
+        while posts:
+            page = []
+            for _ in range(10):
+                try:
+                    post_id = posts.pop()[4]
+                    post = self.get_post(post_id)
+                    if post:
+                        page.append(post)
+                    else:
+                        break
+                except IndexError:
+                    break
+            pages.append(page)
+        return pages
+
+
 

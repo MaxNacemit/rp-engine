@@ -5,13 +5,13 @@ from os import getenv, environ
 from flask import Flask, render_template, request, redirect, url_for, session
 
 from database import Database
+from manaengine import ManaCounter
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
-environ['KN_USERNAME'] = 'root'
-environ['KN_PASSWORD'] = 'nacemit'
-environ['FLASK_SECRET_KEY'] = 'verystrongandsecretkey'
 db = Database(getenv('KN_USERNAME'), getenv('KN_PASSWORD'))
+mana_engine = ManaCounter()
+
 
 app = Flask(__name__)
 app.secret_key = getenv('FLASK_SECRET_KEY')
@@ -26,14 +26,23 @@ def login_required(f):
 
     return wrapper
 
+def approval_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs)
+        curr_user = db.get_user_dict(session['username'])
+        if 'loggedin' not in session or curr_user['status'] < 1:
+            return redirect(url_for('/'))
+        return f(*args, **kwargs)
+
+    return wrapper
 
 def master_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         # print(f.__name__, args, kwargs)
         curr_user = db.get_user_dict(session['username'])
-        if 'loggedin' not in session and curr_user['status'] <= 1:
-            return redirect(url_for('home'))
+        if 'loggedin' not in session or curr_user['status'] <= 1:
+            return redirect(url_for('/'))
         return f(*args, **kwargs)
 
     return wrapper
@@ -150,7 +159,7 @@ def pending_spells(page):
     if db.get_unapproved_spells_pages():
         try:
             spell_list = db.get_unapproved_spells_pages()[int(page)]
-        except:
+        except IndexError:
             return redirect(url_for('spells_pending', page=0))
     else:
         spell_list = None
@@ -164,7 +173,7 @@ def pending(spell_id):
     if spell:
         return render_template('spell.html', spell=spell)
     else:
-        return redirect(url_for('home'))
+        return redirect(url_for('spells_pending'))
 
 
 # TODO improve spell moderation
@@ -177,7 +186,9 @@ def approve(spell_id):
         db.approve_spell(spell_id)
     elif spell and form['submitter'] == ["delete"] or form['submitter'] == "delete":
         db.delete_spell(spell_id)
-    return redirect(url_for('home'))
+    return redirect(url_for('spells_pending'))
+
+# TODO add a system of artifacts(like spells, but no mana requirements and only have 1 owner)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 import threading
 import time
+import json
 
 
 class ManaCounter:
@@ -35,15 +36,15 @@ class ManaCounter:
         cost = base_cost
         for param in spell_dependencies.keys():
             if spell_dependencies[param] == 'lin':
-                cost = cost * spell_params[param]
+                cost = cost * float(spell_params[param])
             elif spell_dependencies[param] == 'div':
-                cost = cost / spell_params[param]
+                cost = cost / float(spell_params[param])
             elif spell_dependencies[param] == 'sqr':
-                cost = cost * (spell_params[param] ** 2)
+                cost = cost * (float(spell_params[param]) ** 2)
             elif spell_dependencies[param] == 'dsq':
-                cost = cost / (spell_params[param] ** 2)
+                cost = cost / (float(spell_params[param]) ** 2)
             elif spell_dependencies[param] == 'exp':
-                cost = cost ** spell_params[param]
+                cost = cost ** float(spell_params[param])
         self.mages[player]['current_mana'] -= int(cost)
         self.mages[player]['lifetime_cast'] += int(cost)
 
@@ -57,3 +58,17 @@ class ManaCounter:
         for player in players:
             self.mages[player]['current_mana'] = self.mages[player]['max_mana']
         time.sleep(259200)
+        time_regenerate()
+
+    def compute_post(self, location, author, content, spells_json, database): #да, в эту штуку надо будет передавать объект БД как параметр
+        spell_dict = json.loads(spells_json)
+        for spell_data in spell_dict:
+            spell_id = int(spell_data['spell'])
+            dependency_dict = dict()
+            for param in spell_data['params'].keys():
+                database.cursor.execute('SELECT * FROM spell_reqs WHERE req_title=%s AND spell=%s', (param, spell_id))
+                param_tuple = database.cursor.fetchone()
+                dependency_dict[param_tuple[1]] = param_tuple[3]
+            base_cost = database.get_spell_dict(spell_id)
+            self.cast_spell(author, dependency_dict, spell_data['params'], int(base_cost))
+        database.make_post(location, author, content, spell_dict)
