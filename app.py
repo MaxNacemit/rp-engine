@@ -9,12 +9,13 @@ from manaengine import ManaCounter
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
-db = Database(getenv('KN_USERNAME'), getenv('KN_PASSWORD'))
+
+db = Database('root', 'nacemit')
 mana_engine = ManaCounter()
 
 
 app = Flask(__name__)
-app.secret_key = getenv('FLASK_SECRET_KEY')
+app.secret_key = 'getenv(FLASK_SECRET_KEY)'
 
 
 def login_required(f):
@@ -28,10 +29,10 @@ def login_required(f):
 
 def approval_required(f):
     @wraps(f)
-    def wrapper(*args, **kwargs)
+    def wrapper(*args, **kwargs):
         curr_user = db.get_user_dict(session['username'])
         if 'loggedin' not in session or curr_user['status'] < 1:
-            return redirect(url_for('/'))
+            return redirect(url_for(''))
         return f(*args, **kwargs)
 
     return wrapper
@@ -39,10 +40,9 @@ def approval_required(f):
 def master_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        # print(f.__name__, args, kwargs)
         curr_user = db.get_user_dict(session['username'])
         if 'loggedin' not in session or curr_user['status'] <= 1:
-            return redirect(url_for('/'))
+            return redirect(url_for(''))
         return f(*args, **kwargs)
 
     return wrapper
@@ -98,9 +98,9 @@ def register():
     return render_template('register.html', msg=msg)
 
 
-@app.route('/home')
+@app.route('/home/<page>', defaults={'page': 0})
 @login_required
-def home():
+def home(page):
     return render_template('home.html', username=session['username'])
 
 
@@ -165,6 +165,23 @@ def pending_spells(page):
         spell_list = None
     return render_template('spell_approval.html', page=spell_list)
 
+@app.route('/user/<user_login>', methods=['GET', 'POST'])
+@master_required
+def user(user_login):
+    user_data = db.get_user_dict(user_login)
+    master_status = db.get_user_dict(session['username'])['status']
+    if request.method == 'POST':
+        if request.form['user_action'] == ['ban'] and user_data['status'] < master_status:
+            db.modify_user(user_login, status=-1)
+        elif request.form['user_action'] == ['admin'] and master_status == 3:
+            db.modify_user(user_login, status=3)
+        elif request.form['user_action'] == ['master']:
+            db.modify_user(user_login, status=2)
+        elif request.form['user_action'] == ['approve'] and user_data['biography_file'] and user_data['status'] < 1:
+            db.modify_user(user_login, status=1)
+    if user_login == session['username']:
+        return redirect(url_for('profile'))
+    return render_template('profile.html', account = user_data, master = master_status)
 
 @app.route('/pending/<spell_id>', methods=['GET', 'POST'])
 @master_required

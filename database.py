@@ -145,9 +145,10 @@ class Database:
         if user_data is not None:
             return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
-    def modify_user(self, login, status):
+    def modify_user(self, login, **kwargs):
         request = 'UPDATE users SET status = %s WHERE login = %s'
-        self.cursor.execute(request, (status, login))
+        self.cursor.execute(request, (kwargs['status'], login))
+        self.con.commit()
 
     def get_post(self, post_id):
         result = dict()
@@ -181,10 +182,22 @@ class Database:
         self.cursor.execute('DELETE FROM forum_posts WHERE id=%s', (post_id, ))
         self.con.commit()
 
-    def get_locations(self):
+    def get_locations_pages(self):
         self.cursor.execute('SELECT * FROM locations')
         locations = list(map(lambda x: {'name': x[0], 'description': x[1]}, self.cursor.fetchall()))
-        return locations
+        while locations:
+            page = []
+            for _ in range(10):
+                try:
+                    loc = locations.pop()
+                    if loc:
+                        page.append(loc)
+                    else:
+                        break
+                except IndexError:
+                    break
+            pages.append(page)
+        return pages
 
     def get_post_pages(self, location):
         self.cursor.execute('SELECT * FROM forum_posts WHERE location=%s', (location,))

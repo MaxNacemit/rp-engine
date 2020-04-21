@@ -21,9 +21,22 @@
         </tr>
     </table>
     <br>
-    <input id="edit_profile" type="submit" value="Редактировать профиль">
-    <label for="edit_profile">
-        <i class="fas fa-edit"></i>
-    </label>
+    {% if not master %}
+        <input id="edit_profile" type="submit" value="Редактировать профиль"> <!-- Тут два варианта - либо прибить ЖСа,
+        либо заменить инпут на нормальную человеческую ссылку. -->
+        <label for="edit_profile">
+            <i class="fas fa-edit"></i>
+        </label>
+    {% else %}
+        <form method="post" action="{{ url_for('user', user_login=account['login']) }}" class="button_block">
+            <button type="submit" name="user_action" value="ban">Забанить пользователя</button>
+            <button type="submit" name="user_action" value="approve">Одобрить анкету пользователя</button>
+            {% if master > 2 %}
+                <button type="submit" name="user_action" value="master">Назначить мастером</button>
+                <button type="submit" name="user_action" value="admin">Назначить админом</button>
+            {% endif %}
+        </form>
+    {% endif %}
+
 </div>
 {% endblock %}
