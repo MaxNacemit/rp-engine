@@ -184,7 +184,8 @@ class Database:
 
     def get_locations_pages(self):
         self.cursor.execute('SELECT * FROM locations')
-        locations = list(map(lambda x: {'name': x[0], 'description': x[1]}, self.cursor.fetchall()))
+        locations = list(map(lambda x: {'id': x[0], 'name': x[1], 'description': x[2]}, self.cursor.fetchall()))
+        pages = []
         while locations:
             page = []
             for _ in range(10):
@@ -197,6 +198,8 @@ class Database:
                 except IndexError:
                     break
             pages.append(page)
+        if not pages:
+            pages = [[None]]
         return pages
 
     def get_post_pages(self, location):
@@ -217,6 +220,10 @@ class Database:
                     break
             pages.append(page)
         return pages
+
+    def create_location(self, name, description):
+        self.cursor.execute('INSERT INTO locations (name, description) VALUES (%s, %s)', (name, description))
+        self.con.commit()
 
 
 

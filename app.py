@@ -1,6 +1,5 @@
 import re
 from functools import wraps
-from os import getenv, environ
 
 from flask import Flask, render_template, request, redirect, url_for, session
 
@@ -27,6 +26,7 @@ def login_required(f):
 
     return wrapper
 
+
 def approval_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -36,6 +36,7 @@ def approval_required(f):
         return f(*args, **kwargs)
 
     return wrapper
+
 
 def master_required(f):
     @wraps(f)
@@ -98,10 +99,16 @@ def register():
     return render_template('register.html', msg=msg)
 
 
-@app.route('/home/<page>', defaults={'page': 0})
+@app.route('/home', defaults={'page': 0})
+@app.route('/home/<page>')
 @login_required
 def home(page):
-    return render_template('home.html', username=session['username'])
+    master = db.get_user_dict(session['username'])['status'] > 1
+    try:
+        locations = db.get_locations_pages()[page]
+    except IndexError:
+        locations = db.get_locations_pages()[0]
+    return render_template('home.html', username=session['username'], master=master, locations=locations)
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -152,6 +159,30 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 
+@app.route('/location/<id>', methods=['GET', 'POST'])
+@approval_required
+def location(id):
+    pass
+
+
+@app.route('/create_location', methods=['GET', 'POST'])
+@master_required
+def create_location():
+    msg = ""
+    if request.method == 'POST':
+        if 'name' in request.form.keys() and 'description' in request.form.keys():
+            db.create_location(request.form['name'], request.form['description'])
+            for key in request.form.keys():
+                if key not in ['name', 'description']:
+                    mana_engine.attune_player(key, db.cursor.lastrowid)
+            msg = str(request.form)
+        else:
+            msg = "Заполните все параметры!"
+    db.cursor.execute('SELECT * FROM users')
+    player_list = db.cursor.fetchall()
+    return render_template('create_location.html', msg=msg, players=player_list)
+
+
 @app.route('/spells_pending/', defaults={'page': 0}, methods=['GET', 'POST'])
 @app.route('/spells_pending/<page>', methods=['GET', 'POST'])
 @master_required
@@ -165,23 +196,26 @@ def pending_spells(page):
         spell_list = None
     return render_template('spell_approval.html', page=spell_list)
 
+
 @app.route('/user/<user_login>', methods=['GET', 'POST'])
 @master_required
 def user(user_login):
     user_data = db.get_user_dict(user_login)
     master_status = db.get_user_dict(session['username'])['status']
     if request.method == 'POST':
-        if request.form['user_action'] == ['ban'] and user_data['status'] < master_status:
+        if request.form['user_action'] == 'ban' and user_data['status'] < master_status:
             db.modify_user(user_login, status=-1)
-        elif request.form['user_action'] == ['admin'] and master_status == 3:
+        elif request.form['user_action'] == 'admin' and master_status == 3:
             db.modify_user(user_login, status=3)
-        elif request.form['user_action'] == ['master']:
+        elif request.form['user_action'] == 'master':
             db.modify_user(user_login, status=2)
-        elif request.form['user_action'] == ['approve'] and user_data['biography_file'] and user_data['status'] < 1:
+        elif request.form['user_action'] == 'approve' and user_data['biography_file'] and user_data['status'] < 1:
             db.modify_user(user_login, status=1)
     if user_login == session['username']:
         return redirect(url_for('profile'))
-    return render_template('profile.html', account = user_data, master = master_status)
+    user_data['status'] = STATUS_DICT[user_data['status']]
+    return render_template('profile.html', account=user_data, master=master_status)
+
 
 @app.route('/pending/<spell_id>', methods=['GET', 'POST'])
 @master_required

@@ -6,12 +6,19 @@ import json
 class ManaCounter:
     def __init__(self):
         self.mages = dict()
+        self.sources = dict()
+        self.locations = dict()
         self.regenerator = threading.Thread(None, self.time_regenerate)
         self.regenerator.start()
 
     def add_player(self, player_name, player_const, player_mana, player_regeneration):
         self.mages[player_name] = {'mana_const': player_const, 'current_mana': player_mana, 'max_mana': player_mana,
                                    'regeneration': player_regeneration, 'lifetime_cast': 0}
+        self.sources[player_name] = None
+        self.locations[author] = None
+
+    def attune_player(self, player_name, location_id):
+        self.sources[player_name] = location_id
 
     def modify_parameter(self, player_name, parameter, modify_expression):
         expression = modify_expression.lstrip.split()
@@ -49,8 +56,11 @@ class ManaCounter:
         self.mages[player]['lifetime_cast'] += int(cost)
 
     def regenerate(self, player):
-        self.mages[player]['current_mana'] += 5 * self.mages[player][
-            'regeneration']  # 5 - потому что в 1 посте 5 секунд; эта штука выполняется при оставлении поста игроком
+        if not self.locations[player] == self.sources[player]:
+            self.mages[player]['current_mana'] += 5 * self.mages[player][
+                'regeneration']  # 5 - потому что в 1 посте 5 секунд; эта штука выполняется при оставлении поста игроком
+        else:
+            self.mages[player]['current_mana'] += 10 * self.mages[player]['regeneration']
 
     def time_regenerate(self):
         # функция восстанавливает ману всем на максимум раз в трое суток
@@ -71,4 +81,6 @@ class ManaCounter:
                 dependency_dict[param_tuple[1]] = param_tuple[3]
             base_cost = database.get_spell_dict(spell_id)
             self.cast_spell(author, dependency_dict, spell_data['params'], int(base_cost))
+        self.locations[author] = location
         database.make_post(location, author, content, spell_dict)
+        self.regenerate(author)

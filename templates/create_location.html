@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block title %}Создание локации{% endblock %}
+
+{% block content %}
+{% if msg %}
+<div class="msg">{{ msg }}</div>
+{% endif %}
+<form action="{{ url_for('create_location') }}" method="post">
+    <p>Название локации:</p>
+    <input name="name" size="50">
+    <p>Описание локации:</p>
+    <textarea cols="80" rows="6" name="description"></textarea>
+    <div>
+        {% for player in players %}
+            <p>Назначить локацию источником магии для {{ player[0] }}:</p>
+                <input name="{{ player[0] }}" type="checkbox">
+            <hr>
+        {% endfor %}
+    </div>
+    <button type="submit">Создать локацию!</button>
+</form>
+{% endblock %}
