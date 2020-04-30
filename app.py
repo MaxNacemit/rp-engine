@@ -9,9 +9,8 @@ from manaengine import ManaCounter
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
 
-db = Database('root', 'nacemit')
+db = Database('ivan', 'strongsqlpassword')
 mana_engine = ManaCounter()
-
 
 app = Flask(__name__)
 app.secret_key = 'getenv(FLASK_SECRET_KEY)'
@@ -105,7 +104,7 @@ def register():
 def home(page):
     master = db.get_user_dict(session['username'])['status'] > 1
     try:
-        locations = db.get_locations_pages()[page]
+        locations = db.get_locations_pages()[int(page)]
     except IndexError:
         locations = db.get_locations_pages()[0]
     return render_template('home.html', username=session['username'], master=master, locations=locations)
@@ -125,7 +124,7 @@ def submit():
             for key in form.keys():
                 if key in REQ_SPELL_LABELS:
                     try:
-                        base[REQ_SPELL_LABELS.index(key)] = form[key][1]#проверка на наш комп
+                        base[REQ_SPELL_LABELS.index(key)] = form[key][1]  # проверка на наш комп
                         base[REQ_SPELL_LABELS.index(key)] = form[key]
                     except:
                         base[REQ_SPELL_LABELS.index(key)] = form[key][0]
@@ -144,19 +143,13 @@ def submit():
     return render_template('submit.html', msg=msg)
 
 
+# TODO: make a working edit_profile() function and .html file
 @app.route('/profile')
 @login_required
 def profile():
     account = db.get_user_dict(session['username'])
     account['status'] = STATUS_DICT[account['status']]
     return render_template('profile.html', account=account)
-
-
-# TODO: make a working edit_profile() function and .html file
-@app.route('/edit_profile', methods=['GET', 'POST'])
-@login_required
-def edit_profile():
-    return render_template('edit_profile.html')
 
 
 @app.route('/location/<id>', methods=['GET', 'POST'])
@@ -178,8 +171,7 @@ def create_location():
             msg = str(request.form)
         else:
             msg = "Заполните все параметры!"
-    db.cursor.execute('SELECT * FROM users')
-    player_list = db.cursor.fetchall()
+    player_list = db.get_users()
     return render_template('create_location.html', msg=msg, players=player_list)
 
 
@@ -238,6 +230,7 @@ def approve(spell_id):
     elif spell and form['submitter'] == ["delete"] or form['submitter'] == "delete":
         db.delete_spell(spell_id)
     return redirect(url_for('spells_pending'))
+
 
 # TODO add a system of artifacts(like spells, but no mana requirements and only have 1 owner)
 

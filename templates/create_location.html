@@ -8,14 +8,19 @@
 {% endif %}
 <form action="{{ url_for('create_location') }}" method="post">
     <p>Название локации:</p>
-    <input name="name" size="50">
+    <label>
+        <input name="name" size="50">
+    </label>
     <p>Описание локации:</p>
-    <textarea cols="80" rows="6" name="description"></textarea>
+    <label>
+        <textarea cols="80" name="description" rows="6"></textarea>
+    </label>
     <div>
         {% for player in players %}
-            <p>Назначить локацию источником магии для {{ player[0] }}:</p>
-                <input name="{{ player[0] }}" type="checkbox">
-            <hr>
+        <p><label>
+            <input name="{{ player[0] }}" type="checkbox">
+        </label>Назначить локацию источником магии для {{ player[0] }}</p>
+        <hr>
         {% endfor %}
     </div>
     <button type="submit">Создать локацию!</button>

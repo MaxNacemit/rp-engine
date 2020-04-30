@@ -22,8 +22,7 @@
     </table>
     <br>
     {% if not master %}
-        <input id="edit_profile" type="submit" value="Редактировать профиль" onclick="editProfile()"> <!-- Тут два варианта - либо прибить ЖСа,
-        либо заменить инпут на нормальную человеческую ссылку. -->
+        <input id="edit_profile" onclick="editProfile()" type="submit" value="Редактировать профиль">
         <label for="edit_profile">
             <i class="fas fa-edit"></i>
         </label>

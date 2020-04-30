@@ -1,10 +1,11 @@
 import mysql.connector
 from passlib.hash import pbkdf2_sha512
+
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
 
 SPELL_DICT_LABELS = (
-'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
+    'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
 
 class Database:
@@ -34,7 +35,6 @@ class Database:
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS compendium_articles(id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(50), article TEXT)')
 
-
     def add_spell(self, spell_params, spell_variables):
         """
 
@@ -52,7 +52,7 @@ class Database:
 
     def delete_spell(self, spell_id):
         self.cursor.execute('DELETE FROM spell_reqs WHERE spell=%s', (int(spell_id),))
-        self.cursor.execute('DELETE FROM spells WHERE id=%s', (int(spell_id), ))
+        self.cursor.execute('DELETE FROM spells WHERE id=%s', (int(spell_id),))
         self.con.commit()
 
     def get_spell_dict(self, spell_id):
@@ -115,6 +115,10 @@ class Database:
             return login
         return False
 
+    def get_users(self):
+        self.cursor.execute('SELECT * FROM users')
+        return self.cursor.fetchall()
+
     def get_user_dict(self, user_login):
         """
 
@@ -159,27 +163,31 @@ class Database:
         spells = self.cursor.fetchall()
         for spell in spells:
             cast_id = spell[0]
-            spell_title, obvious = self.get_spell_dict(spell[1])['spell_title'], self.get_spell_dict(spell[1])['obvious']
-            self.cursor.execute('SELECT * FROM cast_reqs WHERE cast_id=%s', (cast_id, ))
+            spell_title, obvious = self.get_spell_dict(spell[1])['spell_title'], self.get_spell_dict(spell[1])[
+                'obvious']
+            self.cursor.execute('SELECT * FROM cast_reqs WHERE cast_id=%s', (cast_id,))
             params = self.cursor.fetchall()
             result[spell_title] = list(map(lambda x: {x[1]: x[2]}, params))
             result[spell_title]['obvious'] = obvious
         return result
 
-    def make_post(self, location, author, content, casts): #casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
-        self.cursor.execute('INSERT INTO forum_posts (author, location, content) VALUES (%s, %s, %s)', (author, location, content))
+    def make_post(self, location, author, content, casts):
+        # casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
+        self.cursor.execute('INSERT INTO forum_posts (author, location, content) VALUES (%s, %s, %s)',
+                            (author, location, content))
         self.con.commit()
         post_id = self.cursor.lastrowid
         for spell in casts:
             self.cursor.execute('INSERT INTO casts (spell, post) VALUES (%s, %s)', (spell['spell'], post_id))
             self.con.commit()
             cast = self.cursor.lastrowid
-            for param in spell['params'].keys(): #стоимость заклинания вычисляется до запуска этой функции
-                self.cursor.execute('INSERT INTO cast_params (cast_id, param_name, param_value) VALUES (%s, %s, %s)', (cast, param, spell['params'][param]))
+            for param in spell['params'].keys():  # стоимость заклинания вычисляется до запуска этой функции
+                self.cursor.execute('INSERT INTO cast_params (cast_id, param_name, param_value) VALUES (%s, %s, %s)',
+                                    (cast, param, spell['params'][param]))
                 self.con.commit()
 
     def delete_post(self, post_id):
-        self.cursor.execute('DELETE FROM forum_posts WHERE id=%s', (post_id, ))
+        self.cursor.execute('DELETE FROM forum_posts WHERE id=%s', (post_id,))
         self.con.commit()
 
     def get_locations_pages(self):
@@ -224,6 +232,3 @@ class Database:
     def create_location(self, name, description):
         self.cursor.execute('INSERT INTO locations (name, description) VALUES (%s, %s)', (name, description))
         self.con.commit()
-
-
-
