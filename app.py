@@ -159,10 +159,14 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 
-@app.route('/location/<id>', methods=['GET', 'POST'])
+@app.route('/location/<id>/<page>', methods=['GET', 'POST'])
 @approval_required
-def location(id):
-    pass
+def location(id, page):
+    if request.method == 'POST':
+        mana_engine.compute_post(id, session['username'], request.form['content'], request.form['spells'], db)
+    posts = db.get_post_pages(id)[page]
+    return render_template('location.html', posts=posts)
+
 
 
 @app.route('/create_location', methods=['GET', 'POST'])
