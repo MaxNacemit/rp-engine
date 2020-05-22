@@ -159,14 +159,16 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 
-@app.route('/location/<id>/<page>', methods=['GET', 'POST'])
+@app.route('/location/<id>/<page>', methods=['GET', 'POST'], defaults={'page': 0})
 @approval_required
 def location(id, page):
     if request.method == 'POST':
         mana_engine.compute_post(id, session['username'], request.form['content'], request.form['spells'], db)
-    posts = db.get_post_pages(id)[page]
+    try:
+        posts = db.get_post_pages(id)[page]
+    except IndexError:
+        posts = None
     return render_template('location.html', posts=posts)
-
 
 
 @app.route('/create_location', methods=['GET', 'POST'])
@@ -174,12 +176,12 @@ def location(id, page):
 def create_location():
     msg = ""
     if request.method == 'POST':
-        if 'name' in request.form.keys() and 'description' in request.form.keys():
+        if request.form['name'] and request.form['description']:
             db.create_location(request.form['name'], request.form['description'])
             for key in request.form.keys():
                 if key not in ['name', 'description']:
                     mana_engine.attune_player(key, db.cursor.lastrowid)
-            msg = str(request.form)
+            msg = "Локация успешно создана!"
         else:
             msg = "Заполните все параметры!"
     db.cursor.execute('SELECT * FROM users')
