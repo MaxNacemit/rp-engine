@@ -16,7 +16,6 @@ mana_engine = ManaCounter()
 app = Flask(__name__)
 app.secret_key = 'getenv(FLASK_SECRET_KEY)'
 
-
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):

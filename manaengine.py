@@ -5,11 +5,16 @@ import json
 
 class ManaCounter:
     def __init__(self):
-        self.mages = dict()
-        self.sources = dict()
-        self.locations = dict()
+        mages = open('mages.json', 'r')
+        sources = open('sources.json', 'r')
+        locations = open('locations.json', 'r')
+        self.mages = json.loads(mages.read())
+        self.sources = json.loads(sources.read())
+        self.locations = json.loads(locations.read())
         self.regenerator = threading.Thread(None, self.time_regenerate)
+        self.backuper = threading.Thread(None, self.backup)
         self.regenerator.start()
+        self.backuper.start()
 
     def add_player(self, player_name, player_const, player_mana, player_regeneration):
         self.mages[player_name] = {'mana_const': player_const, 'current_mana': player_mana, 'max_mana': player_mana,
@@ -69,6 +74,17 @@ class ManaCounter:
             self.mages[player]['current_mana'] = self.mages[player]['max_mana']
         time.sleep(259200)
         time_regenerate()
+
+    def backup(self):
+        #функция нужна для того, чтобы при рестартах сервера все не слетало к дьяволу. Почему не БД? JSON логичнее
+        mages = open('mages.json', "w")
+        sources = open('sources.json', 'w')
+        locations = open('locations.json', 'w')
+        mages.write(json.dumps(self.mages))
+        sources.write(json.dumps(self.sources))
+        locations.write(json.dumps(self.locations))
+        time.sleep(3600)
+
 
     def compute_post(self, location, author, content, spells_json, database): #да, в эту штуку надо будет передавать объект БД как параметр
         spell_dict = json.loads(spells_json)

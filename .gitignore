@@ -130,3 +130,8 @@ dmypy.json
 
 #PyCharm dir
 .idea/
+
+#Mana engine data
+mages.json
+sources.json
+locations.json
