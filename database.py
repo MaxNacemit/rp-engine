@@ -6,6 +6,8 @@ USER_DICT_LABELS = (
 SPELL_DICT_LABELS = (
 'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
+LOCATION_DICT_LABELS = ('id', 'name', 'description')
+
 
 class Database:
     def __init__(self, login, password):
@@ -166,7 +168,7 @@ class Database:
             result[spell_title]['obvious'] = obvious
         return result
 
-    def make_post(self, location, author, content, casts): #casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
+    def make_post(self, location, author, content, casts):  # casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
         self.cursor.execute('INSERT INTO forum_posts (author, location, content) VALUES (%s, %s, %s)', (author, location, content))
         self.con.commit()
         post_id = self.cursor.lastrowid
@@ -174,13 +176,17 @@ class Database:
             self.cursor.execute('INSERT INTO casts (spell, post) VALUES (%s, %s)', (spell['spell'], post_id))
             self.con.commit()
             cast = self.cursor.lastrowid
-            for param in spell['params'].keys(): #стоимость заклинания вычисляется до запуска этой функции
+            for param in spell['params'].keys():  # стоимость заклинания вычисляется до запуска этой функции
                 self.cursor.execute('INSERT INTO cast_params (cast_id, param_name, param_value) VALUES (%s, %s, %s)', (cast, param, spell['params'][param]))
                 self.con.commit()
 
     def delete_post(self, post_id):
         self.cursor.execute('DELETE FROM forum_posts WHERE id=%s', (post_id, ))
         self.con.commit()
+
+    def get_location(self, id):
+        self.cursor.execute('SELECT * FROM locations WHERE id=%s', (id,))
+        return zip(LOCATION_DICT_LABELS, self.cursor.fetchone())
 
     def get_locations_pages(self):
         self.cursor.execute('SELECT * FROM locations')
@@ -220,6 +226,22 @@ class Database:
                     break
             pages.append(page)
         return pages
+
+    def get_casts_page(self, location, page):
+        post_list = tuple(map(lambda x: x[4], self.get_post_pages(location)[page]))
+        result = dict()
+        for post_id in post_list:
+            post = dict()
+            self.cursor.execute('SELECT * FROM casts WHERE post=%s', (post_id, ))
+            casts = self.cursor.fetchall()
+            cast_ids = list(map(lambda x: x[0], casts))
+            cast_spells = list(map(lambda x: self.get_spell_dict(x[1])['spell_title'], casts))
+            for i in range(len(casts)):
+                self.cursor.execute('SELECT * FROM cast_params WHERE cast_id=%s', cast_ids[i])
+                params = self.cursor.fetchall()
+                post[cast_spells[i]] = list(map(lambda x: zip(('cast_id', 'param_name', 'param_value'), x)), params)
+            result[post_id] = post
+        return result
 
     def create_location(self, name, description):
         self.cursor.execute('INSERT INTO locations (name, description) VALUES (%s, %s)', (name, description))

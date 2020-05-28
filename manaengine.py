@@ -85,7 +85,6 @@ class ManaCounter:
         locations.write(json.dumps(self.locations))
         time.sleep(3600)
 
-
     def compute_post(self, location, author, content, spells_json, database): #да, в эту штуку надо будет передавать объект БД как параметр
         spell_dict = json.loads(spells_json)
         for spell_data in spell_dict:
@@ -95,8 +94,11 @@ class ManaCounter:
                 database.cursor.execute('SELECT * FROM spell_reqs WHERE req_title=%s AND spell=%s', (param, spell_id))
                 param_tuple = database.cursor.fetchone()
                 dependency_dict[param_tuple[1]] = param_tuple[3]
-            base_cost = database.get_spell_dict(spell_id)
+            spell = database.get_spell_dict(spell_id)
+            base_cost = spell['mana_cost']
+            obvious = spell['is_obvious']
             self.cast_spell(author, dependency_dict, spell_data['params'], int(base_cost))
+        spell_dict['is_obvious'] = int(obvious) # передаем очевидность в каст как параметр, чтобы ее можно было учесть при выводе
         self.locations[author] = location
         database.make_post(location, author, content, spell_dict)
         self.regenerate(author)

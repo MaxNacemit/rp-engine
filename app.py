@@ -8,6 +8,7 @@ from manaengine import ManaCounter
 
 STATUS_DICT = {3: 'админ', 2: 'мастер', 1: 'пользователь', 0: 'не назначен', -1: 'забанен'}
 REQ_SPELL_LABELS = ['spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school']
+POST_LABELS = ('author', 'datetime', 'location', 'content', 'id')
 
 db = Database('root', 'nacemit')
 mana_engine = ManaCounter()
@@ -15,6 +16,7 @@ mana_engine = ManaCounter()
 
 app = Flask(__name__)
 app.secret_key = 'getenv(FLASK_SECRET_KEY)'
+
 
 def login_required(f):
     @wraps(f)
@@ -164,10 +166,12 @@ def location(id, page):
     if request.method == 'POST':
         mana_engine.compute_post(id, session['username'], request.form['content'], request.form['spells'], db)
     try:
-        posts = db.get_post_pages(id)[page]
+        posts = map(lambda x: zip(POST_LABELS, x), get_post_pages(id)[page])
     except IndexError:
         posts = None
-    return render_template('location.html', posts=posts)
+    location = db.get_location(id)
+    casts = db.get_casts_page(id, page)
+    return render_template('location.html', posts=posts, location=location, casts=casts)
 
 
 @app.route('/create_location', methods=['GET', 'POST'])

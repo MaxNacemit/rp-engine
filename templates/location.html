@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block title %}Ролевая локация{% endblock %}
+{% block content %}
+<div class="description">
+    <h1>{{ location.name }}</h1>
+    {{ location.description }}
+</div>
+{% for post in posts %}
+    <div class="post">
+        <div class="post-meta">
+            {{ post['author'] }}<br>
+            <div cast="spells-data">
+            {% for cast in casts[post] %}
+                {% if cast
+            </div>
+        </div>
+    </div>
+{% endfor %}
