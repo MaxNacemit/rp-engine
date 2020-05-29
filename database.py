@@ -6,7 +6,7 @@ USER_DICT_LABELS = (
 SPELL_DICT_LABELS = (
 'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
 
-LOCATION_DICT_LABELS = ('id', 'name', 'description')
+LOCATION_DICT_LABELS = ('id', 'name', 'description', 'master')
 
 
 class Database:
@@ -26,7 +26,7 @@ class Database:
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spells_knowledge(user_login VARCHAR(50), spell_id INT, FOREIGN KEY (user_login) REFERENCES users (login), FOREIGN KEY(spell_id) REFERENCES spells (id))')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS locations(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), description TEXT)')
+            'CREATE TABLE IF NOT EXISTS locations(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), description TEXT, master VARCHAR(50) FOREIGN KEY (master) REFERENCES users(login))')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS forum_posts(author VARCHAR(50), datetime TIMESTAMP, location INT, content TEXT, id INT AUTO_INCREMENT PRIMARY KEY, FOREIGN KEY (author) REFERENCES users (login), FOREIGN KEY (location) REFERENCES locations(id))')
         self.cursor.execute(
@@ -239,7 +239,7 @@ class Database:
             for i in range(len(casts)):
                 self.cursor.execute('SELECT * FROM cast_params WHERE cast_id=%s', cast_ids[i])
                 params = self.cursor.fetchall()
-                post[cast_spells[i]] = list(map(lambda x: zip(('cast_id', 'param_name', 'param_value'), x)), params)
+                post[cast_spells[i]][params[1]] = params[2]
             result[post_id] = post
         return result
 

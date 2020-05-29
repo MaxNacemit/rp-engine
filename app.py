@@ -166,12 +166,13 @@ def location(id, page):
     if request.method == 'POST':
         mana_engine.compute_post(id, session['username'], request.form['content'], request.form['spells'], db)
     try:
-        posts = map(lambda x: zip(POST_LABELS, x), get_post_pages(id)[page])
+        posts = list(map(lambda x: zip(POST_LABELS, x), db.get_post_pages(id)[page]))
     except IndexError:
         posts = None
-    location = db.get_location(id)
+    location_data = db.get_location(id)
     casts = db.get_casts_page(id, page)
-    return render_template('location.html', posts=posts, location=location, casts=casts)
+    master = int(session['username'] == location_data('master'))
+    return render_template('location.html', posts=posts, location_data=location_data, casts=casts, master=master, page=page)
 
 
 @app.route('/create_location', methods=['GET', 'POST'])
