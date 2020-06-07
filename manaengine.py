@@ -17,18 +17,18 @@ class ManaCounter:
             self.sources = dict()
             self.locations = dict()
         self.regenerator = threading.Thread(None, self.time_regenerate)
-        self.backuper = threading.Thread(None, self.backup)
         self.regenerator.start()
-        self.backuper.start()
 
     def add_player(self, player_name, player_const, player_mana, player_regeneration):
         self.mages[player_name] = {'mana_const': player_const, 'current_mana': player_mana, 'max_mana': player_mana,
                                    'regeneration': player_regeneration, 'lifetime_cast': 0}
         self.sources[player_name] = None
         self.locations[author] = None
+        self.backup()
 
     def attune_player(self, player_name, location_id):
         self.sources[player_name] = location_id
+        self.backup()
 
     def modify_parameter(self, player_name, parameter, modify_expression):
         expression = modify_expression.lstrip.split()
@@ -64,6 +64,7 @@ class ManaCounter:
                 cost = cost ** float(spell_params[param])
         self.mages[player]['current_mana'] -= int(cost)
         self.mages[player]['lifetime_cast'] += int(cost)
+        self.backup()
 
     def regenerate(self, player):
         if not self.locations[player] == self.sources[player]:
@@ -88,7 +89,6 @@ class ManaCounter:
         mages.write(json.dumps(self.mages))
         sources.write(json.dumps(self.sources))
         locations.write(json.dumps(self.locations))
-        time.sleep(3600)
 
     def compute_post(self, location, author, content, spells_json, database): #да, в эту штуку надо будет передавать объект БД как параметр
         spell_dict = json.loads(spells_json)  # Формат JSONа - [{'spell': '1', 'params': {ParamName: Value}}]
@@ -106,6 +106,7 @@ class ManaCounter:
             spell_data['params']['is_obvious'] = int(obvious)  # передаем очевидность в каст как параметр, чтобы ее можно было учесть при выводе
         self.locations[author] = location
         database.make_post(location, author, content, spell_dict)
+        self.backup()
         try:
             self.regenerate(author)
         except:

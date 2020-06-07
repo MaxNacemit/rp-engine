@@ -235,6 +235,8 @@ def user(user_login):
             db.modify_user(user_login, status=2)
         elif request.form['user_action'] == 'approve' and user_data['biography_file'] and user_data['status'] < 1:
             db.modify_user(user_login, status=1)
+            user = db.get_user_dict(user_login)
+            mana_engine.add_player(user_login, user['learning_const'], user['max_mana'])
     if user_login == session['username']:
         return redirect(url_for('profile'))
     user_data['status'] = STATUS_DICT[user_data['status']]
