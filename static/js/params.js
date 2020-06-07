@@ -9,4 +9,3 @@ function addParameter() {
         '<option value="exp">Экспонента</option> </select><br>';
     form.insertAdjacentHTML("beforeend", dependency_selector)
 }
-

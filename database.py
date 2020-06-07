@@ -2,7 +2,7 @@ import mysql.connector
 import datetime
 from passlib.hash import pbkdf2_sha512
 USER_DICT_LABELS = (
-    'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
+    'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography', 'status')
 
 SPELL_DICT_LABELS = (
 'id', 'spell_title', 'is_public', 'is_obvious', 'learning_const', 'mana_cost', 'description', 'school', 'approved')
@@ -148,9 +148,15 @@ class Database:
         if user_data is not None:
             return pbkdf2_sha512.verify(password, user_data['pass_hash'])
 
-    def modify_user(self, login, **kwargs):
-        request = 'UPDATE users SET status = %s WHERE login = %s'
-        self.cursor.execute(request, (kwargs['status'], login))
+    def modify_user(self, user, **kwargs):
+        for key in USER_DICT_LABELS:
+            if not (key in kwargs.keys() and kwargs[key]):
+                if key != 'status' or self.get_user_dict(user)['status'] > 1:
+                    kwargs[key] = self.get_user_dict(user)[key]
+                else:
+                    kwargs['status'] = 0
+        request='UPDATE users SET status = %s, school=%s, biography_file=%s, max_mana=%s, learning_const=%s WHERE login = %s'
+        self.cursor.execute(request, (kwargs['status'], kwargs['school'], kwargs['biography'], kwargs['max_mana'], kwargs['learning_const'], user))
         self.con.commit()
 
     def get_post(self, post_id):  # Дублирует get_casts_pages, но лучше

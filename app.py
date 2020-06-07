@@ -156,9 +156,12 @@ def submit():
     return render_template('submit.html', msg=msg)
 
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    if request.method == 'POST':
+        form = dict(request.form)
+        db.modify_user(session['username'], **form)
     account = db.get_user_dict(session['username'])
     account['status'] = STATUS_DICT[account['status']]
     return render_template('profile.html', account=account)
@@ -207,7 +210,7 @@ def create_location():
 @app.route('/spells_pending/', defaults={'page': 0}, methods=['GET', 'POST'])
 @app.route('/spells_pending/<page>', methods=['GET', 'POST'])
 @master_required
-def pending_spells(page):
+def spells_pending(page):
     if db.get_unapproved_spells_pages():
         try:
             spell_list = db.get_unapproved_spells_pages()[int(page)]
@@ -245,7 +248,7 @@ def pending(spell_id):
     if spell:
         return render_template('spell.html', spell=spell)
     else:
-        return redirect(url_for('spells_pending'))
+        return redirect(url_for('spells_pending', page=0))
 
 
 # TODO improve spell moderation
@@ -258,7 +261,7 @@ def approve(spell_id):
         db.approve_spell(spell_id)
     elif spell and form['submitter'] == ["delete"] or form['submitter'] == "delete":
         db.delete_spell(spell_id)
-    return redirect(url_for('spells_pending'))
+    return redirect(url_for('spells_pending', page=0))
 
 # TODO add a system of artifacts(like spells, but no mana requirements and only have 1 owner)
 

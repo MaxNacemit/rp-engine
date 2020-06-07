@@ -181,3 +181,6 @@ body.loggedin {
     height: 20%;
     overflow: auto;
 }
+#edit-form {
+    display: none;
+}
