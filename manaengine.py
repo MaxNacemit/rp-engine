@@ -5,10 +5,10 @@ import json
 
 class ManaCounter:
     def __init__(self):
-        mages = open('mages.json', 'r')
-        sources = open('sources.json', 'r')
-        locations = open('locations.json', 'r')
         try:
+            mages = open('mages.json', 'r')
+            sources = open('sources.json', 'r')
+            locations = open('locations.json', 'r')
             self.mages = json.loads(mages.read())
             self.sources = json.loads(sources.read())
             self.locations = json.loads(locations.read())
