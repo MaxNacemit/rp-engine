@@ -11,7 +11,7 @@
     <input name="name" size="50">
     <p>Описание локации:</p>
     <textarea cols="80" rows="6" name="description"></textarea>
-    <div>
+    <div class="mass-list">
         {% for player in players %}
             <p>Назначить локацию источником магии для {{ player[0] }}:</p>
                 <input name="{{ player[0] }}" type="checkbox">

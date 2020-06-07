@@ -1,4 +1,5 @@
 import mysql.connector
+import datetime
 from passlib.hash import pbkdf2_sha512
 USER_DICT_LABELS = (
     'login', 'pass_hash', 'nickname', 'max_mana', 'learning_const', 'school', 'biography_file', 'status')
@@ -12,7 +13,7 @@ LOCATION_DICT_LABELS = ('id', 'name', 'description', 'master')
 class Database:
     def __init__(self, login, password):
         self.con = mysql.connector.connect(host="localhost", user=login, password=password, database="knowledge")
-        self.cursor = self.con.cursor()
+        self.cursor = self.con.cursor(buffered=True)
         # пароли должны хешироваться SHA-512; статус - 3 - Admin, 2 - Master, 1 - User, -1 - Banned
         # dependence is mul(*), div, msq(*x^2), dsq or exp
         self.cursor.execute(
@@ -26,9 +27,9 @@ class Database:
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS spells_knowledge(user_login VARCHAR(50), spell_id INT, FOREIGN KEY (user_login) REFERENCES users (login), FOREIGN KEY(spell_id) REFERENCES spells (id))')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS locations(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), description TEXT, master VARCHAR(50) FOREIGN KEY (master) REFERENCES users(login))')
+            'CREATE TABLE IF NOT EXISTS locations(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50), description TEXT, master VARCHAR(50), FOREIGN KEY (master) REFERENCES users(login))')
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS forum_posts(author VARCHAR(50), datetime TIMESTAMP, location INT, content TEXT, id INT AUTO_INCREMENT PRIMARY KEY, FOREIGN KEY (author) REFERENCES users (login), FOREIGN KEY (location) REFERENCES locations(id))')
+            'CREATE TABLE IF NOT EXISTS forum_posts(author VARCHAR(50), datetime DATETIME, location INT, content TEXT, id INT AUTO_INCREMENT PRIMARY KEY, FOREIGN KEY (author) REFERENCES users (login), FOREIGN KEY (location) REFERENCES locations(id))')
         self.cursor.execute(
             'CREATE TABLE IF NOT EXISTS casts(id INT AUTO_INCREMENT PRIMARY KEY, spell INT, post INT, FOREIGN KEY (post) REFERENCES forum_posts(id), FOREIGN KEY (spell) REFERENCES spells (id))')
         self.cursor.execute(
@@ -138,7 +139,7 @@ class Database:
         public_spells = self.cursor.execute(pub_req, pub_vals).fetchall()
         priv_req = 'SELECT spell_id FROM spells_knowledge WHERE login = %s'
         priv_ids = self.cursor.execute(priv_req, (user['id'],)).fetchall()
-        spells = public_spells + priv_ids
+        spells = list(map(lambda x: zip(SPELL_DICT_LABELS, x), public_spells + priv_ids))
         return spells
 
     # TODO check if cast is available, edit after moderation
@@ -152,25 +153,24 @@ class Database:
         self.cursor.execute(request, (kwargs['status'], login))
         self.con.commit()
 
-    def get_post(self, post_id):
+    def get_post(self, post_id):  # Дублирует get_casts_pages, но лучше
         result = dict()
-        self.cursor.execute('SELECT * FROM forum_posts WHERE id=%s')
+        self.cursor.execute('SELECT * FROM forum_posts WHERE id=%s', (post_id, ))
         post = self.cursor.fetchone()
         result['post'] = {'author': post[0], 'time': post[1], 'content': post[3]}
-        self.cursor.execute('SELECT * FROM casts WHERE post=%s', (post_id))
+        self.cursor.execute('SELECT * FROM casts WHERE post=%s', (post_id, ))
         spells = self.cursor.fetchall()
         for spell in spells:
             cast_id = spell[0]
-            spell_title, obvious = self.get_spell_dict(spell[1])['spell_title'], self.get_spell_dict(spell[1])['obvious']
+            spell_title = self.get_spell_dict(spell[1])['spell_title']
             self.cursor.execute('SELECT * FROM cast_reqs WHERE cast_id=%s', (cast_id, ))
             params = self.cursor.fetchall()
             result[spell_title] = list(map(lambda x: {x[1]: x[2]}, params))
-            result[spell_title]['obvious'] = obvious
         return result
 
     def make_post(self, location, author, content, casts):  # casts - массив словарей вида {spell: id, params: {param1: value1 ...}}
-        self.cursor.execute('INSERT INTO forum_posts (author, location, content) VALUES (%s, %s, %s)', (author, location, content))
-        self.con.commit()
+        self.cursor.execute('INSERT INTO forum_posts (author, datetime, location, content) VALUES (%s, %s, %s, %s)', (author, datetime.datetime.now(), location, content))
+        self.con.commit(),
         post_id = self.cursor.lastrowid
         for spell in casts:
             self.cursor.execute('INSERT INTO casts (spell, post) VALUES (%s, %s)', (spell['spell'], post_id))
@@ -186,7 +186,7 @@ class Database:
 
     def get_location(self, id):
         self.cursor.execute('SELECT * FROM locations WHERE id=%s', (id,))
-        return zip(LOCATION_DICT_LABELS, self.cursor.fetchone())
+        return dict(zip(LOCATION_DICT_LABELS, self.cursor.fetchone()))
 
     def get_locations_pages(self):
         self.cursor.execute('SELECT * FROM locations')
@@ -211,6 +211,7 @@ class Database:
     def get_post_pages(self, location):
         self.cursor.execute('SELECT * FROM forum_posts WHERE location=%s', (location,))
         posts = self.cursor.fetchall()
+        posts.reverse()
         pages = []
         while posts:
             page = []
@@ -227,24 +228,10 @@ class Database:
             pages.append(page)
         return pages
 
-    def get_casts_page(self, location, page):
-        post_list = tuple(map(lambda x: x[4], self.get_post_pages(location)[page]))
-        result = dict()
-        for post_id in post_list:
-            post = dict()
-            self.cursor.execute('SELECT * FROM casts WHERE post=%s', (post_id, ))
-            casts = self.cursor.fetchall()
-            cast_ids = list(map(lambda x: x[0], casts))
-            cast_spells = list(map(lambda x: self.get_spell_dict(x[1])['spell_title'], casts))
-            for i in range(len(casts)):
-                self.cursor.execute('SELECT * FROM cast_params WHERE cast_id=%s', cast_ids[i])
-                params = self.cursor.fetchall()
-                post[cast_spells[i]][params[1]] = params[2]
-            result[post_id] = post
-        return result
-
     def create_location(self, name, description):
-        self.cursor.execute('INSERT INTO locations (name, description) VALUES (%s, %s)', (name, description))
+        self.cursor.execute('SELECT * FROM users WHERE status=3')
+        admin = self.cursor.fetchone()[0]
+        self.cursor.execute('INSERT INTO locations (name, description, master) VALUES (%s, %s, %s)', (name,description,admin))
         self.con.commit()
 
 

@@ -2,20 +2,35 @@
 
 {% block title %}Ролевая локация{% endblock %}
 {% block content %}
+<script>
+    function castSpell(spell) {
+    var request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200){
+            document.getElementById("spell-data").innerHTML = this.responseText;
+        }
+    };
+    request.open("POST", {{ url_for('spell') }}, true)
+    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded")
+    request.send("spell=" + toString(spell) + "&user" + "{{ user }}")
+    }
+}
+</script>
 <div class="description">
     <h1>{{ location_data.name }}</h1>
     {{ location_data.description }}
 </div>
+{% if posts %}
 {% for post in posts %}
     <div class="post">
         <div class="post-meta">
-            {{ post['author'] }}<br>
-            {{ post['datetime'] }}<br>
+            {{ post['post']['author'] }}<br>
+            {{ post['post']['datetime'] }}<br>
             <div cast="spells-data">
-            {% for cast in casts[post['id']] %}
-                {% if cast['is_obvious'] == 1 or master = True %}
+            {% for cast in post.keys() %}
+                {% if cast['is_obvious'] == 1 or master == True and cast != 'post' %}
                 <p>{{ cast }}:
-                    {% for param in cast %}
+                    {% for param in cast.keys() %}
                         {{ param }} = {{ cast[param] }}<br>
                     {% endfor %}
                 </p>
@@ -23,15 +38,17 @@
             {% endfor %}
             </div>
         </div>
-        <div class="post-content">{{ post['content'] }}</div>
+        <div class="post-content">{{ post['post']['content'] }}</div>
     </div>
 {% endfor %}
+{% endif %}
 <div class="posting-form">
-    <form name="posting-form" action="{{ url_for('location', id=location_data.id, page=page }}" method="post">
+    <form name="posting-form" action="{{ url_for('location', id=location_data.id, page=page) }}" method="post">
         <textarea rows="6" cols="80" name="content"></textarea>
-        <textarea rows="6" cols="80" name="spells" class="spell-input"></textarea>
-        <button type="button" onclick="castSpell">Каст заклинания</button>
+        <input type="text" value="[]" class="spell-input" name="spells">
+        <button type="button" onclick="castSpell(-1)">Каст заклинания</button>
         <button type="submit">Отправить пост</button>
     </form>
     <div id="spell-data"></div>
 </div>
+{% endblock %}

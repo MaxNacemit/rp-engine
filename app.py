@@ -50,6 +50,17 @@ def master_required(f):
     return wrapper
 
 
+@app.route('/spell', methods=['POST'])
+def spell():
+    if request.form['spell'] == "-1":
+        spell_list = db.get_user_spells(request.form['user'])
+        spell_data = False
+    else:
+        spell_data = request.form['spell']
+        param_list = db.get_spell_params(int(request.form['spell']))
+    return render_template('spell_casting.html', spell_data=spell_data, param_list=param_list, spell_list=spell_list)
+
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if 'loggedin' in session:
@@ -166,13 +177,13 @@ def location(id, page):
     if request.method == 'POST':
         mana_engine.compute_post(id, session['username'], request.form['content'], request.form['spells'], db)
     try:
-        posts = list(map(lambda x: zip(POST_LABELS, x), db.get_post_pages(id)[page]))
+        posts = db.get_post_pages(id)[page]
     except IndexError:
         posts = None
     location_data = db.get_location(id)
-    casts = db.get_casts_page(id, page)
-    master = int(session['username'] == location_data('master'))
-    return render_template('location.html', posts=posts, location_data=location_data, casts=casts, master=master, page=page)
+    master = int(session['username'] == location_data['master'])
+    user = session['username']
+    return render_template('location.html', posts=posts, location_data=location_data, master=master, page=page, user=user)
 
 
 @app.route('/create_location', methods=['GET', 'POST'])

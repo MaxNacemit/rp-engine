@@ -8,9 +8,14 @@ class ManaCounter:
         mages = open('mages.json', 'r')
         sources = open('sources.json', 'r')
         locations = open('locations.json', 'r')
-        self.mages = json.loads(mages.read())
-        self.sources = json.loads(sources.read())
-        self.locations = json.loads(locations.read())
+        try:
+            self.mages = json.loads(mages.read())
+            self.sources = json.loads(sources.read())
+            self.locations = json.loads(locations.read())
+        except:
+            self.mages = dict()
+            self.sources = dict()
+            self.locations = dict()
         self.regenerator = threading.Thread(None, self.time_regenerate)
         self.backuper = threading.Thread(None, self.backup)
         self.regenerator.start()
@@ -86,7 +91,7 @@ class ManaCounter:
         time.sleep(3600)
 
     def compute_post(self, location, author, content, spells_json, database): #да, в эту штуку надо будет передавать объект БД как параметр
-        spell_dict = json.loads(spells_json)
+        spell_dict = json.loads(spells_json)  # Формат JSONа - [{'spell': '1', 'params': {ParamName: Value}}]
         for spell_data in spell_dict:
             spell_id = int(spell_data['spell'])
             dependency_dict = dict()
@@ -98,7 +103,10 @@ class ManaCounter:
             base_cost = spell['mana_cost']
             obvious = spell['is_obvious']
             self.cast_spell(author, dependency_dict, spell_data['params'], int(base_cost))
-        spell_dict['is_obvious'] = int(obvious) # передаем очевидность в каст как параметр, чтобы ее можно было учесть при выводе
+            spell_data['params']['is_obvious'] = int(obvious)  # передаем очевидность в каст как параметр, чтобы ее можно было учесть при выводе
         self.locations[author] = location
         database.make_post(location, author, content, spell_dict)
-        self.regenerate(author)
+        try:
+            self.regenerate(author)
+        except:
+            pass

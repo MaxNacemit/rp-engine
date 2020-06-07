@@ -171,3 +171,13 @@ body.loggedin {
     padding: 5px;
     margin: 0 0 10px 0;
 }
+
+.spell-input {
+    display: none
+}
+
+.mass-list {
+    width: 30%;
+    height: 20%;
+    overflow: auto;
+}

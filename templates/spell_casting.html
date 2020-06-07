@@ -1,0 +1,29 @@
+{% if spell_data %}
+    <script>
+        function makeJSON(param_list) {
+            var data = new Object()
+            data['spell'] = {{ spell_data }}
+            data['params'] = new Object()
+            var i
+            var param_inputs = document.getElementsByClassName('parameterInput')
+            for (i = 0; i < param_list.length; i++) {
+                data.param_list[i] = param_inputs[i].value
+            }
+            if (document.getElementById("spell-data").innerHTML != []) {
+                document.getElementById("spell-data").innerHTML = document.getElementById("spell-data").innerHTML + "," + JSON.stringify(data)
+            } else {
+                document.getElementById("spell-data").innerHTML = JSON.stringify(data)
+            }
+        }
+    </script>
+    {% for param in param_list.keys() %}
+        <p>{{ param }}:  <input type="number" class="parameterInput" min="0" step="0.1"></p>
+    {% endfor %}
+    <button type="button" onclick="makeJSON({{ list(param_list.keys()) }})">Кастануть</button>
+{% else %}
+    <div class="mass-list">
+        {% for spell in spell_list %}
+        <p>{{ spell.spell_title }} <button onclick="castSpell({{ spell.id }})" type="button">Использовать заклинание</button></p>
+        {% endfor %}
+    </div>
+{% endif %}
